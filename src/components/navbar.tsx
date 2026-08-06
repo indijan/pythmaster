@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
 import { Badge } from "@/components/ui/badge"
@@ -27,8 +27,17 @@ import {
   Sparkles,
   Trophy,
   Zap,
+  Type,
+  Languages,
 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
+
+type FontSize = "sm" | "md" | "lg"
+type Language = "en" | "hu"
+
+const fontSizes: Record<FontSize, string> = { sm: "text-xs", md: "text-sm", lg: "text-base" }
+const fontSizeLabels: Record<FontSize, string> = { sm: "A-", md: "A", lg: "A+" }
+const langLabels: Record<Language, string> = { en: "🇬🇧 EN", hu: "🇭🇺 HU" }
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -46,6 +55,21 @@ export function Navbar() {
 
   const [xp, setXp] = useState(0)
   const [userLevel, setUserLevel] = useState(1)
+  const [fontSize, setFontSize] = useState<FontSize>("md")
+  const [lang, setLang] = useState<Language>("en")
+
+  const cycleFontSize = useCallback(() => {
+    setFontSize((prev) => {
+      const next = prev === "sm" ? "md" : prev === "md" ? "lg" : "sm"
+      document.documentElement.classList.remove(fontSizes.sm, fontSizes.md, fontSizes.lg)
+      document.documentElement.classList.add(fontSizes[next])
+      return next
+    })
+  }, [])
+
+  const toggleLang = useCallback(() => {
+    setLang((prev) => (prev === "en" ? "hu" : "en"))
+  }, [])
 
   useEffect(() => {
     setMounted(true)
@@ -104,6 +128,30 @@ export function Navbar() {
               <span>{xp} XP</span>
             </Badge>
           )}
+
+          {/* Font Size */}
+          <div
+            className="hidden sm:inline-flex items-center justify-center rounded-lg size-7 hover:bg-muted transition-colors cursor-pointer text-[10px] font-bold gap-0.5"
+            onClick={cycleFontSize}
+            role="button"
+            tabIndex={0}
+            aria-label="Change font size"
+            title={`Font: ${fontSizeLabels[fontSize]}`}
+          >
+            <Type className="h-3 w-3" />
+            {fontSizeLabels[fontSize]}
+          </div>
+
+          {/* Language */}
+          <div
+            className="hidden sm:inline-flex items-center justify-center rounded-lg px-1.5 h-7 hover:bg-muted transition-colors cursor-pointer text-xs font-medium"
+            onClick={toggleLang}
+            role="button"
+            tabIndex={0}
+            aria-label="Switch language"
+          >
+            {langLabels[lang]}
+          </div>
 
           <div
             className="inline-flex items-center justify-center rounded-lg size-8 hover:bg-muted transition-colors cursor-pointer"
