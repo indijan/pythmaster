@@ -4,9 +4,8 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
-import { nhost } from "@/lib/nhost/client"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { createClient } from "@/lib/supabase/client"
+import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
 import {
   LayoutDashboard,
   BookOpen,
@@ -30,6 +28,7 @@ import {
   Trophy,
   Zap,
 } from "lucide-react"
+import type { User } from "@supabase/supabase-js"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -42,15 +41,13 @@ export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const [user, setUser] = useState<User | null>(null)
   const [mounted, setMounted] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
-    const session = nhost.getUserSession()
-    setIsAuthenticated(session !== null)
-    setUserEmail(session?.user?.email || null)
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
 
   if (!mounted) return null
@@ -58,10 +55,8 @@ export function Navbar() {
   if (pathname === "/login" || pathname === "/register") return null
 
   const handleSignOut = async () => {
-    const session = nhost.getUserSession()
-    const refreshToken = session?.refreshTokenId
-    await nhost.auth.signOut({ refreshToken: refreshToken! })
-    nhost.clearSession()
+    const supabase = createClient()
+    await supabase.auth.signOut()
     window.location.href = "/"
   }
 
@@ -78,50 +73,47 @@ export function Navbar() {
             const isActive = pathname.startsWith(item.href)
             return (
               <Link key={item.href} href={item.href}>
-                <Button variant={isActive ? "secondary" : "ghost"} size="sm">
-                  <item.icon className="h-4 w-4 mr-1.5" />
+                <div className={`inline-flex items-center gap-1.5 px-2.5 h-7 text-[0.8rem] font-medium rounded-[min(var(--radius-md),12px)] transition-colors whitespace-nowrap ${isActive ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}>
+                  <item.icon className="h-3.5 w-3.5" />
                   {item.label}
-                </Button>
+                </div>
               </Link>
             )
           })}
         </nav>
 
         <div className="flex items-center gap-2">
-          {isAuthenticated && (
+          {user && (
             <Badge variant="outline" className="hidden sm:flex items-center gap-1">
               <Zap className="h-3 w-3 text-amber-500" />
               <span>740 XP</span>
             </Badge>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
+          <div
+            className="inline-flex items-center justify-center rounded-lg size-8 hover:bg-muted transition-colors cursor-pointer"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            role="button"
+            tabIndex={0}
             aria-label="Toggle theme"
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setTheme(theme === "dark" ? "light" : "dark") }}
           >
             <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </Button>
+          </div>
 
-          {isAuthenticated ? (
+          {user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={undefined} />
-                    <AvatarFallback className="text-xs">
-                      {userEmail?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
+              <DropdownMenuTrigger className="rounded-full">
+                <div className="inline-flex items-center justify-center rounded-full size-8 hover:bg-muted transition-colors cursor-pointer bg-primary/10 text-primary font-bold text-sm">
+                  {user.email?.charAt(0).toUpperCase() || "U"}
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-medium">
-                      {userEmail?.split("@")[0]}
+                      {user.email?.split("@")[0]}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       Level 3 · 740 XP
@@ -151,19 +143,21 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm">Sign in</Button>
+                <div className="inline-flex items-center gap-1 px-2.5 h-7 text-[0.8rem] font-medium rounded-[min(var(--radius-md),12px)] hover:bg-muted transition-colors">
+                  Sign in
+                </div>
               </Link>
               <Link href="/register">
-                <Button size="sm">Get Started</Button>
+                <div className="inline-flex items-center gap-1.5 px-2.5 h-7 text-[0.8rem] font-medium rounded-[min(var(--radius-md),12px)] bg-primary text-primary-foreground hover:bg-primary/80 transition-colors">
+                  Get Started
+                </div>
               </Link>
             </div>
           )}
 
           <Sheet>
-            <SheetTrigger className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
+            <SheetTrigger className="md:hidden inline-flex items-center justify-center rounded-lg size-8 hover:bg-muted transition-colors cursor-pointer">
+              <Menu className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="right" className="w-64">
               <nav className="flex flex-col gap-1 mt-6">
@@ -171,13 +165,10 @@ export function Navbar() {
                   const isActive = pathname.startsWith(item.href)
                   return (
                     <Link key={item.href} href={item.href}>
-                      <Button
-                        variant={isActive ? "secondary" : "ghost"}
-                        className="justify-start w-full"
-                      >
-                        <item.icon className="h-4 w-4 mr-2" />
+                      <div className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}>
+                        <item.icon className="h-4 w-4" />
                         {item.label}
-                      </Button>
+                      </div>
                     </Link>
                   )
                 })}

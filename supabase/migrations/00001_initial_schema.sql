@@ -18,7 +18,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 -- ============================================================
--- 2. profiles — extends auth.users (Nhost Auth)
+-- 2. profiles — extends Supabase auth.users
 -- ============================================================
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -288,9 +288,42 @@ CREATE INDEX IF NOT EXISTS idx_analytics_user ON analytics(user_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_type ON analytics(event_type);
 
 -- ============================================================
--- Permissions are managed via Hasura permission system
--- See: https://hasura.io/docs/latest/auth/authorization/permissions/
+-- RLS: Row Level Security
 -- ============================================================
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mission_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE generated_lessons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quizzes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quiz_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE code_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE challenge_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE xp_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resume_skills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analytics ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE missions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prompt_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_cache ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users read own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Anyone can read missions" ON missions FOR SELECT USING (true);
+CREATE POLICY "Users manage own progress" ON mission_progress FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own lessons" ON generated_lessons FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users read quizzes" ON quizzes FOR SELECT USING (true);
+CREATE POLICY "Users manage own quiz attempts" ON quiz_attempts FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own code reviews" ON code_reviews FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own challenge attempts" ON challenge_attempts FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users read own badges" ON badges FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users read own xp history" ON xp_history FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users read own resume skills" ON resume_skills FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users read own project versions" ON project_versions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Service manages analytics" ON analytics FOR ALL USING (true);
+CREATE POLICY "Service manages prompts" ON prompt_versions FOR ALL USING (true);
+CREATE POLICY "Service manages knowledge cache" ON knowledge_cache FOR ALL USING (true);
 
 -- ============================================================
 -- Updated-at trigger helper

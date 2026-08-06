@@ -11,7 +11,7 @@ import { AIMentorCard } from "@/components/dashboard/ai-mentor-card"
 import { Separator } from "@/components/ui/separator"
 import type { DashboardData, UserBadge, RecentActivity, ResumeSkill } from "@/types"
 
-// Mock data — will be replaced by Nhost GraphQL queries and AI generation
+// Mock data — will be replaced by Supabase queries and AI generation
 const mockDashboard: DashboardData = {
   profile: {
     id: "user-1",

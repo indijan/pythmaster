@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { nhost } from "@/lib/nhost/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -33,16 +33,16 @@ function LoginPage() {
     setLoading(true)
     setError(null)
 
-    try {
-      await nhost.auth.signInEmailPassword({ email, password })
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      setError(error.message)
+    } else {
       router.push(redirectTo)
       router.refresh()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Sign in failed"
-      setError(message)
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   return (

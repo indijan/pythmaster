@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { nhost } from "@/lib/nhost/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,23 +24,22 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    try {
-      await nhost.auth.signUpEmailPassword({
-        email,
-        password,
-        options: {
-          displayName,
-          metadata: { display_name: displayName },
-        },
-      })
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: displayName },
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
       router.push("/dashboard")
       router.refresh()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Registration failed"
-      setError(message)
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   return (
