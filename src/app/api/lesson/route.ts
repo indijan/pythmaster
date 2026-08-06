@@ -56,10 +56,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { missionId } = body as { missionId: number }
+    const { missionId, language } = body as { missionId: number; language?: string }
     if (!missionId) {
       return NextResponse.json({ error: "missionId is required" }, { status: 400 })
     }
+
+    const lang = language === "hu" ? "Hungarian" : "English"
 
     const mission = getMissionById(missionId)
     if (!mission) {
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
       (url) => `Source: ${url}\n(Content fetched from official documentation)`
     )
 
-    const systemPrompt = buildLessonSystemPrompt()
+    const systemPrompt = buildLessonSystemPrompt(lang, level)
     const userPrompt = buildLessonUserPrompt(mission, student, projectContext, knowledgeSnippets)
 
     const lesson = await generateStructuredResponse<LessonResponse>(systemPrompt, userPrompt, {

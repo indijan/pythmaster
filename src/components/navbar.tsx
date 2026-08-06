@@ -32,12 +32,12 @@ import {
 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 
-type FontSize = "sm" | "md" | "lg"
-type Language = "en" | "hu"
+import { useT, type Language } from "@/lib/i18n/context"
 
-const fontSizes: Record<FontSize, string> = { sm: "text-xs", md: "text-sm", lg: "text-base" }
-const fontSizeLabels: Record<FontSize, string> = { sm: "A-", md: "A", lg: "A+" }
-const langLabels: Record<Language, string> = { en: "🇬🇧 EN", hu: "🇭🇺 HU" }
+type FontSize = "sm" | "md" | "lg" | "xl"
+
+const fontSizes: Record<FontSize, string> = { sm: "text-xs", md: "", lg: "text-base", xl: "text-lg" }
+const fontSizeLabels: Record<FontSize, string> = { sm: "A-", md: "A", lg: "A+", xl: "A++" }
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -53,23 +53,26 @@ export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [mounted, setMounted] = useState(false)
 
+  const { lang, setLang, t } = useT()
   const [xp, setXp] = useState(0)
   const [userLevel, setUserLevel] = useState(1)
   const [fontSize, setFontSize] = useState<FontSize>("md")
-  const [lang, setLang] = useState<Language>("en")
 
   const cycleFontSize = useCallback(() => {
     setFontSize((prev) => {
-      const next = prev === "sm" ? "md" : prev === "md" ? "lg" : "sm"
-      document.documentElement.classList.remove(fontSizes.sm, fontSizes.md, fontSizes.lg)
-      document.documentElement.classList.add(fontSizes[next])
+      const order: FontSize[] = ["sm", "md", "lg", "xl"]
+      const idx = order.indexOf(prev)
+      const next = order[(idx + 1) % order.length]
+      // Remove all font classes, add only if not default (md)
+      document.documentElement.classList.remove("text-xs", "text-base", "text-lg")
+      if (fontSizes[next]) document.documentElement.classList.add(fontSizes[next])
       return next
     })
   }, [])
 
   const toggleLang = useCallback(() => {
-    setLang((prev) => (prev === "en" ? "hu" : "en"))
-  }, [])
+    setLang(lang === "en" ? "hu" : "en")
+  }, [lang, setLang])
 
   useEffect(() => {
     setMounted(true)
@@ -150,7 +153,7 @@ export function Navbar() {
             tabIndex={0}
             aria-label="Switch language"
           >
-            {langLabels[lang]}
+            {lang === "en" ? "🇬🇧 EN" : "🇭🇺 HU"}
           </div>
 
           <div

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Playground } from "@/components/playground/playground"
+import { useT } from "@/lib/i18n/context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -35,6 +36,7 @@ export function MissionLessonView({
   const [lessonContent, setLessonContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [fromCache, setFromCache] = useState(false)
+  const { lang } = useT()
 
   // Auto-load existing lesson on mount
   useEffect(() => {
@@ -71,7 +73,7 @@ export function MissionLessonView({
       const res = await fetch("/api/lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ missionId }),
+        body: JSON.stringify({ missionId, language: lang }),
       })
       const data = await res.json()
       if (data.theory) {
@@ -104,7 +106,6 @@ export function MissionLessonView({
                 <TabsTrigger
                   key={step.id}
                   value={step.id}
-                  disabled={i > activeStep + 1}
                   className="text-xs gap-1 h-7"
                 >
                   <step.icon className="h-3 w-3" />
