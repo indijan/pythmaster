@@ -17,6 +17,7 @@ import {
   FileText,
   Download,
   Loader2,
+  ArrowRight,
 } from "lucide-react"
 
 interface LessonViewProps {
@@ -178,27 +179,120 @@ ${learningObjectives.map((o) => `# - ${o}`).join("\n")}
         />
       )}
 
-      {/* Challenge placeholder */}
+      {/* Challenge */}
       {activeStep === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Challenge</CardTitle>
-            <CardDescription>Apply what you learned</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5" />
+              {lang === "hu" ? "Feladat" : "Challenge"}
+            </CardTitle>
+            <CardDescription>
+              {lang === "hu"
+                ? "Írd meg a megoldást és kérd az AI ellenőrzést"
+                : "Write your solution and submit for AI review"}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Complete the coding challenge to unlock the review.
+          <CardContent className="space-y-4">
+            <p className="text-sm">
+              {lang === "hu"
+                ? `Cél: ${projectFeature}`
+                : `Goal: ${projectFeature}`}
             </p>
             <Playground height="350px" />
+            <div className="flex justify-end">
+              <Button onClick={async () => {
+                setActiveStep(3)
+              }}>
+                {lang === "hu" ? "Beküldés" : "Submit for Review"}
+                <CheckCircle2 className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Review / Quiz / Summary placeholders */}
-      {activeStep >= 3 && (
+      {/* Review */}
+      {activeStep === 3 && (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <p>Complete the previous steps to unlock this section.</p>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" />
+              {lang === "hu" ? "AI Ellenőrzés" : "AI Review"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {lang === "hu"
+                ? "Az AI átnézi a kódod helyességét, olvashatóságát és pythonic stílusát."
+                : "The AI will review your code for correctness, readability, and Pythonic style."}
+            </p>
+            <p className="text-sm">
+              {lang === "hu"
+                ? "💡 Tipp: futtasd a kódot a Playground-ban, mielőtt továbblépsz!"
+                : "💡 Tip: run your code in the Playground before moving on!"}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setActiveStep(2)}>
+                {lang === "hu" ? "Vissza a feladathoz" : "Back to Challenge"}
+              </Button>
+              <Button onClick={() => setActiveStep(4)}>
+                {lang === "hu" ? "Tovább a kvízhez" : "Continue to Quiz"}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quiz */}
+      {activeStep === 4 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {lang === "hu" ? "Kvíz" : "Quiz"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {lang === "hu"
+                ? "10 kérdéses kvíz következik. A továbblépéshez 80% szükséges."
+                : "10-question quiz coming up. 80% required to pass."}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setActiveStep(3)}>
+                {lang === "hu" ? "Vissza" : "Back"}
+              </Button>
+              <Button onClick={() => setActiveStep(5)}>
+                {lang === "hu" ? "Tovább az összegzéshez" : "Continue to Summary"}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary */}
+      {activeStep === 5 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              {lang === "hu" ? "Összegzés" : "Summary"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {lang === "hu"
+                ? "Gratulálunk! Teljesítetted a küldetést. Az összegzés tartalmazza a fő tanulságokat és egy cheat sheet-et."
+                : "Congratulations! You completed the mission. The summary includes key takeaways and a cheat sheet."}
+            </p>
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setActiveStep(4)}>
+                {lang === "hu" ? "Vissza a kvízhez" : "Back to Quiz"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
