@@ -44,10 +44,25 @@ export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [mounted, setMounted] = useState(false)
 
+  const [xp, setXp] = useState(0)
+  const [userLevel, setUserLevel] = useState(1)
+
   useEffect(() => {
     setMounted(true)
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      if (data.user) {
+        // Fetch real profile data
+        fetch("/api/profile")
+          .then((r) => r.json())
+          .then((p) => {
+            if (p.xp !== undefined) setXp(p.xp)
+            if (p.level !== undefined) setUserLevel(p.level)
+          })
+          .catch(() => {})
+      }
+    })
   }, [])
 
   if (!mounted) return null
@@ -86,7 +101,7 @@ export function Navbar() {
           {user && (
             <Badge variant="outline" className="hidden sm:flex items-center gap-1">
               <Zap className="h-3 w-3 text-amber-500" />
-              <span>740 XP</span>
+              <span>{xp} XP</span>
             </Badge>
           )}
 
@@ -116,7 +131,7 @@ export function Navbar() {
                       {user.email?.split("@")[0]}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      Level 3 · 740 XP
+                      Level {userLevel} · {xp} XP
                     </span>
                   </div>
                 </DropdownMenuLabel>

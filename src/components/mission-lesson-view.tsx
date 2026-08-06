@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Playground } from "@/components/playground/playground"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,6 +34,12 @@ export function MissionLessonView({
   const [activeStep, setActiveStep] = useState(0)
   const [lessonContent, setLessonContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
+
+  // Auto-load existing lesson on mount
+  useEffect(() => {
+    loadLesson()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const steps = [
     { id: "lesson", label: "Lesson", icon: BookOpen },
@@ -44,9 +50,24 @@ export function MissionLessonView({
     { id: "summary", label: "Summary", icon: Download },
   ]
 
-  const handleGenerateLesson = async () => {
+  const loadLesson = async (forceGenerate = false) => {
     setLoading(true)
     try {
+      if (!forceGenerate) {
+        // Try cached lesson first
+        const cached = await fetch(`/api/lesson?missionId=${missionId}`)
+        if (cached.ok) {
+          const data = await cached.json()
+          if (data?.theory) {
+            setLessonContent(data.theory)
+            setFromCache(true)
+            setLoading(false)
+            return
+          }
+        }
+      }
+
+      // Generate new lesson
       const res = await fetch("/api/lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,9 +76,10 @@ export function MissionLessonView({
       const data = await res.json()
       if (data.theory) {
         setLessonContent(data.theory)
+        setFromCache(false)
       }
     } catch (err) {
-      console.error("Failed to generate lesson:", err)
+      console.error("Failed to load lesson:", err)
     } finally {
       setLoading(false)
     }
@@ -113,8 +135,8 @@ export function MissionLessonView({
                 <p className="text-muted-foreground mb-4">
                   Generate your personalized lesson for this mission.
                 </p>
-                <Button onClick={handleGenerateLesson}>
-                  Generate Lesson
+                <Button onClick={() => loadLesson()}>
+                  {fromCache ? "📖 Continue Reading" : "Generate Lesson"}
                 </Button>
               </div>
             )}

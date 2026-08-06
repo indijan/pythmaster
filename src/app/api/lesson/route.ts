@@ -5,6 +5,37 @@ import { getMissionById } from "@/lib/curriculum"
 import { calculateTotalXp, calculateLevel } from "@/lib/mission-engine"
 import { createClient } from "@/lib/supabase/server"
 
+// GET — return existing lesson from DB (no regeneration)
+export async function GET(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  }
+
+  const missionId = request.nextUrl.searchParams.get("missionId")
+  if (!missionId) {
+    return NextResponse.json({ error: "missionId is required" }, { status: 400 })
+  }
+
+  const { data: lesson } = await supabase
+    .from("generated_lessons")
+    .select("content, created_at")
+    .eq("user_id", user.id)
+    .eq("mission_id", parseInt(missionId))
+    .single()
+
+  if (!lesson) {
+    return NextResponse.json(null, { status: 404 })
+  }
+
+  return NextResponse.json({
+    theory: (lesson as Record<string, string>).content,
+    cached: true,
+    createdAt: (lesson as Record<string, string>).created_at,
+  })
+}
+
 interface LessonResponse {
   theory: string
   examples: { title: string; code: string; explanation: string }[]
