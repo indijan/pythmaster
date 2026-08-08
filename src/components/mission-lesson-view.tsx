@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { Playground } from "@/components/playground/playground"
+import { getMissionById } from "@/lib/curriculum"
 import { useT } from "@/lib/i18n/context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -128,6 +130,7 @@ export function MissionLessonView({
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const { lang } = useT()
+  const nextMission = getMissionById(missionId + 1)
 
   const isHungarian = lang === "hu"
 
@@ -407,6 +410,7 @@ export function MissionLessonView({
   }
 
   const currentStep = steps[activeStep]
+  const missionCompleted = quizScore !== null && quizScore >= requiredQuizScore
 
   return (
     <div className="space-y-6">
@@ -905,10 +909,28 @@ export function MissionLessonView({
                 </div>
               </div>
             )}
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setActiveStep(4)}>
-                {isHungarian ? "Vissza a kvízhez" : "Back to Quiz"}
-              </Button>
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
+              {missionCompleted ? (
+                <>
+                  <Link href="/dashboard">
+                    <Button variant="outline">
+                      {isHungarian ? "Irányítópult" : "Dashboard"}
+                    </Button>
+                  </Link>
+                  {nextMission && (
+                    <Link href={`/mission/${nextMission.id}`}>
+                      <Button>
+                        {isHungarian ? "Következő küldetés" : "Next Mission"}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <Button variant="outline" onClick={() => setActiveStep(4)}>
+                  {isHungarian ? "Vissza a kvízhez" : "Back to Quiz"}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

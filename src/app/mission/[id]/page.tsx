@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getMissionById, getPrerequisites, getMissionLevelBand, getMissionsByPhase, getLocalizedMission, getLocalizedPhase } from "@/lib/curriculum"
 import { getMissionStatus, getNextMission } from "@/lib/mission-engine"
+import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,8 +42,26 @@ interface MissionPageProps {
   params: Promise<{ id: string }>
 }
 
+interface MissionProgressRow {
+  mission_id: number
+  status: "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "CODE_REVIEW" | "QUIZ" | "PROJECT" | "COMPLETED"
+  lesson_viewed: boolean
+  examples_executed: boolean
+  challenge_passed: boolean
+  code_review_completed: boolean
+  quiz_passed: boolean
+  quiz_score: number | null
+  project_updated: boolean
+  summary_generated: boolean
+  started_at: string | null
+  completed_at: string | null
+  attempts: number
+}
+
 export default async function MissionPage({ params }: MissionPageProps) {
   const lang = await getServerLanguage()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   const { id } = await params
   const missionId = parseInt(id, 10)
   const mission = getMissionById(missionId)
@@ -56,13 +75,37 @@ export default async function MissionPage({ params }: MissionPageProps) {
   const localizedMission = getLocalizedMission(mission, lang)
   const localizedPhase = getLocalizedPhase(mission.phase, lang)
 
-  // Mock: completed mission IDs for demo
-  const completedMissionIds = Array.from(
-    { length: missionId - 1 },
-    (_, i) => i + 1
-  )
+  const { data: progressRows } = user
+    ? await supabase
+      .from("mission_progress")
+      .select("*")
+      .eq("user_id", user.id)
+    : { data: [] as unknown[] }
 
-  const status = getMissionStatus(missionId, completedMissionIds)
+  const typedRows = (progressRows || []) as MissionProgressRow[]
+  const completedMissionIds = typedRows.filter((row) => row.status === "COMPLETED").map((row) => row.mission_id)
+  const currentRow = typedRows.find((row) => row.mission_id === missionId) || null
+  const currentProgress = currentRow
+    ? {
+        id: `${currentRow.mission_id}`,
+        userId: user?.id || "",
+        missionId: currentRow.mission_id,
+        status: currentRow.status,
+        lessonViewed: currentRow.lesson_viewed,
+        examplesExecuted: currentRow.examples_executed,
+        challengePassed: currentRow.challenge_passed,
+        codeReviewCompleted: currentRow.code_review_completed,
+        quizPassed: currentRow.quiz_passed,
+        quizScore: currentRow.quiz_score,
+        projectUpdated: currentRow.project_updated,
+        summaryGenerated: currentRow.summary_generated,
+        startedAt: currentRow.started_at,
+        completedAt: currentRow.completed_at,
+        attempts: currentRow.attempts,
+      }
+    : null
+
+  const status = getMissionStatus(missionId, completedMissionIds, currentProgress)
   const nextMission = getNextMission(missionId, completedMissionIds)
   const isLocked = status === "LOCKED"
 
@@ -329,11 +372,28 @@ export default async function MissionPage({ params }: MissionPageProps) {
       )}
 
       {status === "COMPLETED" && (
-        <div className="flex justify-center pt-4">
-          <Badge className="px-6 py-3 text-base">
-            <CheckCircle2 className="h-5 w-5 mr-2" />
-            {lang === "hu" ? "Küldetés teljesítve 🎉" : "Mission Completed 🎉"}
-          </Badge>
+        <div className="space-y-4 pt-4">
+          <div className="flex justify-center">
+            <Badge className="px-6 py-3 text-base">
+              <CheckCircle2 className="h-5 w-5 mr-2" />
+              {lang === "hu" ? "Küldetés teljesítve 🎉" : "Mission Completed 🎉"}
+            </Badge>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
+            <Link href="/dashboard">
+              <Button variant="outline">
+                {lang === "hu" ? "Irányítópult" : "Dashboard"}
+              </Button>
+            </Link>
+            {nextMission && (
+              <Link href={`/mission/${nextMission.id}`}>
+                <Button>
+                  {lang === "hu" ? "Következő küldetés" : "Next Mission"}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>

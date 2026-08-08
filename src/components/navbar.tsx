@@ -35,7 +35,7 @@ import { useT } from "@/lib/i18n/context"
 
 type FontSize = "sm" | "md" | "lg" | "xl"
 
-const fontSizes: Record<FontSize, string> = { sm: "text-xs", md: "", lg: "text-base", xl: "text-lg" }
+const fontSizes: Record<FontSize, number> = { sm: 14, md: 16, lg: 18, xl: 20 }
 const fontSizeLabels: Record<FontSize, string> = { sm: "A-", md: "A", lg: "A+", xl: "A++" }
 
 const navItems = [
@@ -55,23 +55,28 @@ export function Navbar() {
   const { lang, setLang, t } = useT()
   const [xp, setXp] = useState(0)
   const [userLevel, setUserLevel] = useState(1)
-  const [fontSize, setFontSize] = useState<FontSize>("md")
+  const [fontSize, setFontSize] = useState<FontSize>(() => {
+    if (typeof window === "undefined") return "md"
+    const savedFontSize = localStorage.getItem("pythmaster-font-size") as FontSize | null
+    if (savedFontSize === "sm" || savedFontSize === "md" || savedFontSize === "lg" || savedFontSize === "xl") {
+      return savedFontSize
+    }
+    return "md"
+  })
 
   const cycleFontSize = useCallback(() => {
     setFontSize((prev) => {
       const order: FontSize[] = ["sm", "md", "lg", "xl"]
       const idx = order.indexOf(prev)
-      const next = order[(idx + 1) % order.length]
-      // Remove all font classes, add only if not default (md)
-      document.documentElement.classList.remove("text-xs", "text-base", "text-lg")
-      if (fontSizes[next]) document.documentElement.classList.add(fontSizes[next])
-      return next
+      return order[(idx + 1) % order.length]
     })
-  }, [])
+  }, [setFontSize])
 
   const toggleLang = useCallback(() => {
-    setLang(lang === "en" ? "hu" : "en")
-  }, [lang, setLang])
+    const nextLang = lang === "en" ? "hu" : "en"
+    setLang(nextLang)
+    router.refresh()
+  }, [lang, router, setLang])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -91,6 +96,11 @@ export function Navbar() {
       }
     })
   }, [])
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${fontSizes[fontSize]}px`
+    localStorage.setItem("pythmaster-font-size", fontSize)
+  }, [fontSize])
 
   if (!mounted) return null
 

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { getMissionById } from "@/lib/curriculum"
+import { calculateLevel } from "@/lib/mission-engine"
 import type { Database, MissionStatus } from "@/types/database"
 
 export interface MissionProgressUpdate {
@@ -42,8 +43,45 @@ export async function upsertMissionProgress(
     throw new Error("Mission not found")
   }
 
-  const { data: existingRow } = await supabase
-    .from("mission_progress")
+  type MissionProgressTable = {
+    select: (columns: string) => {
+      eq: (column: string, value: string | number) => {
+        eq: (column: string, value: string | number) => {
+          maybeSingle: () => Promise<{ data: MissionProgressRow | null }>
+        }
+      }
+    }
+    upsert: (
+      values: Record<string, unknown>,
+      options?: { onConflict?: string }
+    ) => Promise<{ error: unknown }>
+  }
+
+  type ProfileTable = {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => Promise<{ data: { total_xp: number; current_level: number } | null }>
+      }
+    }
+    update: (values: { total_xp: number; current_level: number }) => {
+      eq: (column: string, value: string) => Promise<unknown>
+    }
+  }
+
+  type XpHistoryTable = {
+    insert: (values: {
+      user_id: string
+      amount: number
+      source: string
+      mission_id: number
+    }) => Promise<unknown>
+  }
+
+  const missionProgressTable = supabase.from("mission_progress") as unknown as MissionProgressTable
+  const profilesTable = supabase.from("profiles") as unknown as ProfileTable
+  const xpHistoryTable = supabase.from("xp_history") as unknown as XpHistoryTable
+
+  const { data: existingRow } = await missionProgressTable
     .select("*")
     .eq("user_id", userId)
     .eq("mission_id", missionId)
@@ -85,20 +123,39 @@ export async function upsertMissionProgress(
     attempts: (existing?.attempts || 0) + (update.incrementAttempts ? 1 : 0),
   }
 
-  type MissionProgressTable = {
-    upsert: (
-      values: Record<string, unknown>,
-      options?: { onConflict?: string }
-    ) => Promise<{ error: unknown }>
-  }
-
-  const missionProgressTable = supabase.from("mission_progress") as unknown as MissionProgressTable
   const { error } = await missionProgressTable.upsert(merged, {
     onConflict: "user_id,mission_id",
   })
 
   if (error) {
     throw error
+  }
+
+  const isNewCompletion =
+    existing?.status !== "COMPLETED" && merged.status === "COMPLETED"
+
+  if (isNewCompletion) {
+    const { data: profile } = await profilesTable
+      .select("total_xp, current_level")
+      .eq("id", userId)
+      .maybeSingle()
+
+    const currentXp = (profile?.total_xp as number | null | undefined) || 0
+    const nextXp = currentXp + (mission.xp || 0)
+    const nextLevel = calculateLevel(nextXp)
+
+    await Promise.all([
+      profilesTable.update({
+        total_xp: nextXp,
+        current_level: nextLevel,
+      }).eq("id", userId),
+      xpHistoryTable.insert({
+        user_id: userId,
+        amount: mission.xp,
+        source: `Completed Mission ${missionId}: ${mission.title}`,
+        mission_id: missionId,
+      }),
+    ])
   }
 
   return merged
