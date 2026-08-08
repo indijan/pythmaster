@@ -7,13 +7,13 @@ export default function SettingsPage() {
       <Card>
         <CardHeader className="text-center">
           <Settings className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-          <CardTitle className="text-2xl">Settings</CardTitle>
+          <CardTitle className="text-2xl">Beállítások</CardTitle>
           <CardDescription>
-            Customize your learning experience.
+            Szabd testre a tanulási élményed.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center text-muted-foreground">
-          <p>Settings page coming soon.</p>
+          <p>A beállítások oldal hamarosan érkezik.</p>
         </CardContent>
       </Card>
     </div>

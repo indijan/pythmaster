@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { usePythonRunner } from "./use-python-runner"
+import { useT } from "@/lib/i18n/context"
 import {
   Play,
   RotateCcw,
@@ -31,6 +32,9 @@ interface PlaygroundProps {
   defaultCode?: string
   example?: string
   height?: string
+  code?: string
+  onCodeChange?: (code: string) => void
+  onRunComplete?: (result: { output: string; error: string | null }) => void
 }
 
 const DEFAULT_CODE = [
@@ -54,32 +58,78 @@ export function Playground({
   defaultCode = DEFAULT_CODE,
   example,
   height = "400px",
+  code,
+  onCodeChange,
+  onRunComplete,
 }: PlaygroundProps) {
-  const [code, setCode] = useState(example || defaultCode)
+  const [internalCode, setInternalCode] = useState(() => code ?? (example || defaultCode))
   const [output, setOutput] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("output")
   const { runCode, runState } = usePythonRunner()
+  const { lang } = useT()
+
+  const currentCode = code ?? internalCode
 
   const handleRun = useCallback(async () => {
     setError(null)
     setOutput("")
     setActiveTab("output")
 
-    const result = await runCode(code)
+    const result = await runCode(currentCode)
     setOutput(result.output)
     setError(result.error)
+    onRunComplete?.(result)
 
     if (result.error) {
       setActiveTab("output")
     }
-  }, [code, runCode])
+  }, [currentCode, onRunComplete, runCode])
 
   const handleReset = useCallback(() => {
-    setCode(example || defaultCode)
+    const nextCode = example || defaultCode
+    if (onCodeChange) {
+      onCodeChange(nextCode)
+    } else {
+      setInternalCode(nextCode)
+    }
     setOutput("")
     setError(null)
-  }, [defaultCode, example])
+  }, [defaultCode, example, onCodeChange])
+
+  const text = lang === "hu"
+    ? {
+        title: "Python Játszótér",
+        loading: "Python betöltése...",
+        runtimeError: "Futási hiba",
+        reset: "Visszaállítás",
+        run: "Futtatás",
+        running: "Futtatás...",
+        output: "Kimenet",
+        hints: "Tippek",
+        clickRun: 'Kattints a "Futtatás"-ra a kód futtatásához.',
+        tip1: "Használd a `print()`-et a kimenet megjelenítéséhez.",
+        tip2: "Ellenőrizd a behúzást, mert a Python szóközökkel jelöli a blokkokat.",
+        tip3: "A változónevek kis- és nagybetű érzékenyek.",
+        error: "Hiba",
+        loadingRuntime: "Python futtatókörnyezet betöltése...",
+      }
+    : {
+        title: "Python Playground",
+        loading: "Loading Python...",
+        runtimeError: "Runtime Error",
+        reset: "Reset",
+        run: "Run",
+        running: "Running...",
+        output: "Output",
+        hints: "Hints",
+        clickRun: 'Click "Run" to execute your code.',
+        tip1: "Use `print()` to see output.",
+        tip2: "Check your indentation - Python uses spaces to define blocks.",
+        tip3: "Variable names are case-sensitive.",
+        error: "Error",
+        loadingRuntime: "Loading Python runtime...",
+      }
 
   const isLoading = runState === "loading"
   const isRunning = runState === "running"
@@ -91,17 +141,17 @@ export function Playground({
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Terminal className="h-4 w-4" />
-            Python Playground
+            {text.title}
             {isLoading && (
               <Badge variant="secondary" className="text-xs">
                 <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                Loading Python...
+                {text.loading}
               </Badge>
             )}
             {isError && (
               <Badge variant="destructive" className="text-xs">
                 <AlertTriangle className="h-3 w-3 mr-1" />
-                Runtime Error
+                {text.runtimeError}
               </Badge>
             )}
           </CardTitle>
@@ -113,7 +163,7 @@ export function Playground({
               disabled={isRunning || isLoading}
             >
               <RotateCcw className="h-4 w-4 mr-1" />
-              Reset
+              {text.reset}
             </Button>
             <Button
               size="sm"
@@ -123,12 +173,12 @@ export function Playground({
               {isRunning ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  Running...
+                  {text.running}
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-1" />
-                  Run
+                  {text.run}
                 </>
               )}
             </Button>
@@ -137,14 +187,18 @@ export function Playground({
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Editor */}
-        <div
-          className="border rounded-md overflow-hidden"
-          style={{ height }}
-        >
+        <div className="border rounded-md overflow-hidden" style={{ height }}>
           <MonacoEditor
             language="python"
-            value={code}
-            onChange={(value) => setCode(value || "")}
+            value={currentCode}
+            onChange={(value) => {
+              const nextValue = value || ""
+              if (onCodeChange) {
+                onCodeChange(nextValue)
+              } else {
+                setInternalCode(nextValue)
+              }
+            }}
             theme="vs-dark"
             options={{
               minimap: { enabled: false },
@@ -168,14 +222,14 @@ export function Playground({
           <TabsList className="h-8">
             <TabsTrigger value="output" className="text-xs gap-1 h-7">
               <Terminal className="h-3 w-3" />
-              Output
+              {text.output}
               {output && !error && (
                 <CheckCircle2 className="h-3 w-3 text-green-500" />
               )}
             </TabsTrigger>
             <TabsTrigger value="hints" className="text-xs gap-1 h-7">
               <Lightbulb className="h-3 w-3" />
-              Hints
+              {text.hints}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="output">
@@ -188,24 +242,22 @@ export function Playground({
                 <div className="text-destructive">
                   <div className="flex items-center gap-1 mb-1">
                     <AlertTriangle className="h-4 w-4" />
-                    <span className="font-semibold">Error</span>
+                    <span className="font-semibold">{text.error}</span>
                   </div>
                   <pre className="whitespace-pre-wrap break-words">{error}</pre>
                 </div>
               ) : (
                 <p className="text-muted-foreground italic">
-                  {isLoading
-                    ? "Loading Python runtime..."
-                    : 'Click "Run" to execute your code. Output will appear here.'}
+                  {isLoading ? text.loadingRuntime : text.clickRun}
                 </p>
               )}
             </div>
           </TabsContent>
           <TabsContent value="hints">
-            <div className="bg-muted/50 rounded-md p-3 min-h-[80px] text-sm text-muted-foreground">
-              <p>💡 <strong>Tip:</strong> Use <code>print()</code> to see output.</p>
-              <p>💡 <strong>Tip:</strong> Check your indentation — Python uses spaces to define blocks.</p>
-              <p>💡 <strong>Tip:</strong> Variable names are case-sensitive.</p>
+            <div className="bg-muted/50 rounded-md p-3 min-h-[80px] text-sm text-muted-foreground space-y-1">
+              <p>💡 <strong>Tip:</strong> {text.tip1}</p>
+              <p>💡 <strong>Tip:</strong> {text.tip2}</p>
+              <p>💡 <strong>Tip:</strong> {text.tip3}</p>
             </div>
           </TabsContent>
         </Tabs>

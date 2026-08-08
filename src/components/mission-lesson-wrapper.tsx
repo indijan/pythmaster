@@ -10,6 +10,7 @@ interface MissionLessonWrapperProps {
   missionTitle: string
   learningObjectives: string[]
   projectFeature: string
+  requiredQuizScore: number
   startLabel: string
 }
 
@@ -18,6 +19,7 @@ export function MissionLessonWrapper({
   missionTitle,
   learningObjectives,
   projectFeature,
+  requiredQuizScore,
   startLabel,
 }: MissionLessonWrapperProps) {
   const [started, setStarted] = useState(false)
@@ -40,6 +42,7 @@ export function MissionLessonWrapper({
         missionTitle={missionTitle}
         learningObjectives={learningObjectives}
         projectFeature={projectFeature}
+        requiredQuizScore={requiredQuizScore}
       />
     </div>
   )

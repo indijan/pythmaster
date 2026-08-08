@@ -3,7 +3,8 @@
 // Each prompt returns a system prompt builder function
 // ============================================================
 
-import type { MissionDefinition, UserProfile, MissionProgress } from "@/types"
+import type { MissionDefinition } from "@/types"
+import type { MissionLevelBand } from "@/lib/curriculum"
 
 // ============================================================
 // LESSON PROMPT
@@ -48,7 +49,8 @@ export function buildLessonUserPrompt(
   mission: MissionDefinition,
   student: { level: number; weakTopics: string[]; quizAverage: number; preferredStyle: string | null },
   projectContext: { version: string; completedFeatures: string[] },
-  knowledgeSnippets: string[]
+  knowledgeSnippets: string[],
+  levelBand: MissionLevelBand
 ): string {
   return `MISSION TO TEACH:
 Title: ${mission.title}
@@ -57,6 +59,7 @@ Difficulty: ${mission.difficulty}/5
 Goal: ${mission.goal}
 Learning Objectives: ${mission.learningObjectives.join(", ")}
 Project Feature: ${mission.projectFeature}
+Recommended learner level: ${levelBand.label} (${levelBand.min}-${levelBand.max})
 
 STUDENT CONTEXT:
 Level: ${student.level}
@@ -79,8 +82,9 @@ Generate a complete lesson following the system prompt format. Make examples dir
 // ============================================================
 export const QUIZ_PROMPT_VERSION = "1.0.0"
 
-export function buildQuizSystemPrompt(): string {
+export function buildQuizSystemPrompt(language = "English"): string {
   return `You are a Python assessment expert. Create multiple-choice quizzes that test understanding, not memorization.
+All content must be written in ${language}.
 
 RULES:
 1. Generate exactly 10 questions.
@@ -126,8 +130,9 @@ Generate 10 quiz questions. Make sure 2-3 questions specifically address the stu
 // ============================================================
 export const HINT_PROMPT_VERSION = "1.0.0"
 
-export function buildHintSystemPrompt(): string {
+export function buildHintSystemPrompt(language = "English"): string {
   return `You are a Python mentor providing progressive hints. NEVER reveal the full solution.
+All content must be written in ${language}.
 
 HINT LEVELS:
 1. Ask a guiding question
@@ -168,8 +173,9 @@ Provide hint level ${nextLevel} (1-5 scale). Do NOT give the full solution unles
 // ============================================================
 export const REVIEW_PROMPT_VERSION = "1.0.0"
 
-export function buildReviewSystemPrompt(): string {
+export function buildReviewSystemPrompt(language = "English"): string {
   return `You are a Python code reviewer. Review student code for a coding challenge.
+All content must be written in ${language}.
 
 EVALUATE:
 1. Correctness — does it meet the requirements?
@@ -216,8 +222,9 @@ Review this code and provide constructive feedback. Score 0-100.`
 // ============================================================
 export const SUMMARY_PROMPT_VERSION = "1.0.0"
 
-export function buildSummarySystemPrompt(): string {
+export function buildSummarySystemPrompt(language = "English"): string {
   return `You create concise, visually organized mission summaries in Markdown.
+All content must be written in ${language}.
 
 OUTPUT FORMAT (JSON):
 {

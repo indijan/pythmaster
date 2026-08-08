@@ -1,10 +1,12 @@
 import Link from "next/link"
 import { MISSIONS, PHASES } from "@/lib/curriculum"
 import { getMissionStatus, calculateProgress, calculateTotalXp, calculateLevel } from "@/lib/mission-engine"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { BookOpen, Lock, CheckCircle2, Clock, Star, ChevronRight } from "lucide-react"
+import { Lock, CheckCircle2, Clock, Star, ChevronRight } from "lucide-react"
+import { getServerLanguage } from "@/lib/i18n/server"
+import { getLocalizedMission, getLocalizedPhase } from "@/lib/curriculum"
 
 const difficultyLabels: Record<number, string> = {
   1: "Beginner",
@@ -14,7 +16,8 @@ const difficultyLabels: Record<number, string> = {
   5: "Expert",
 }
 
-export default function MissionListPage() {
+export default async function MissionListPage() {
+  const lang = await getServerLanguage()
   // Mock: completed mission IDs (first 6 for demo)
   const completedMissionIds = [1, 2, 3, 4, 5, 6]
   const progress = calculateProgress(completedMissionIds)
@@ -25,16 +28,20 @@ export default function MissionListPage() {
     <div className="container mx-auto max-w-4xl px-4 py-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Your Learning Path</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {lang === "hu" ? "Tanulási útvonalad" : "Your Learning Path"}
+        </h1>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span>Level {level}</span>
+          <span>{lang === "hu" ? "Szint" : "Level"} {level}</span>
           <span>·</span>
           <span>{totalXp} XP</span>
           <span>·</span>
-          <span>{progress.completed}/{progress.total} Missions</span>
+          <span>{progress.completed}/{progress.total} {lang === "hu" ? "küldetés" : "Missions"}</span>
         </div>
         <Progress value={progress.percentage} className="h-1.5 mt-3" />
-        <p className="text-xs text-muted-foreground mt-1">{progress.percentage}% Complete</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {progress.percentage}% {lang === "hu" ? "teljesítve" : "Complete"}
+        </p>
       </div>
 
       {/* Phases */}
@@ -44,14 +51,13 @@ export default function MissionListPage() {
           const phaseCompleted = phaseMissions.filter((m) =>
             completedMissionIds.includes(m.id)
           ).length
-          const phasePercentage = Math.round((phaseCompleted / phaseMissions.length) * 100)
-
+          const localizedPhase = getLocalizedPhase(phase.name, lang)
           return (
             <section key={phase.name}>
               <div className="flex items-baseline justify-between mb-3">
                 <div>
-                  <h2 className="text-lg font-semibold">{phase.name}</h2>
-                  <p className="text-sm text-muted-foreground">{phase.description}</p>
+                  <h2 className="text-lg font-semibold">{localizedPhase.name}</h2>
+                  <p className="text-sm text-muted-foreground">{localizedPhase.description}</p>
                 </div>
                 <Badge variant="secondary" className="text-xs">
                   {phaseCompleted}/{phaseMissions.length}
@@ -60,6 +66,7 @@ export default function MissionListPage() {
 
               <div className="space-y-2">
                 {phaseMissions.map((mission) => {
+                  const localizedMission = getLocalizedMission(mission, lang)
                   const status = getMissionStatus(mission.id, completedMissionIds)
                   const isLocked = status === "LOCKED"
                   const isCompleted = status === "COMPLETED"
@@ -87,8 +94,8 @@ export default function MissionListPage() {
 
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium truncate">{mission.title}</h3>
-                            <p className="text-sm text-muted-foreground truncate">{mission.goal}</p>
+                            <h3 className="font-medium truncate">{localizedMission.title}</h3>
+                            <p className="text-sm text-muted-foreground truncate">{localizedMission.goal}</p>
                           </div>
 
                           {/* Meta */}

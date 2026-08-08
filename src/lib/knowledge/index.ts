@@ -2,14 +2,6 @@
 // Knowledge Retrieval — Fetch & cache official documentation
 // ============================================================
 
-interface CachedKnowledge {
-  topic: string
-  sourceUrl: string
-  content: string
-  pythonVersion: string
-  fetchedAt: Date
-}
-
 /**
  * Tier 1 authoritative sources (priority order)
  */
@@ -103,9 +95,8 @@ export function buildContextPackage(
     ? mission.officialSources
     : getRelevantSources(mission.learningObjectives)
 
-  // Mock snippets — in production, these come from cached/scraped documentation
   const snippets = primarySources.map(
-    (url) => `[From: ${url}]\nKey concepts for "${mission.title}" — fetch from knowledge cache in production.`
+    (url) => `[Source: ${url}]\nUse the official documentation for "${mission.title}" and keep examples aligned to the learner's current objectives.`
   )
 
   const contextPrompt = `SOURCES TO USE (MANDATORY):

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateStructuredResponse } from "@/lib/openai/client"
 import { buildLessonSystemPrompt, buildLessonUserPrompt, LESSON_PROMPT_VERSION } from "@/lib/prompts"
-import { getMissionById } from "@/lib/curriculum"
+import { getMissionById, getMissionLevelBand, getMissionRecommendedLevel, getLocalizedMission } from "@/lib/curriculum"
 import { calculateTotalXp, calculateLevel } from "@/lib/mission-engine"
 import { createClient } from "@/lib/supabase/server"
+import { upsertMissionProgress } from "@/lib/mission-progress"
 
 // GET — return existing lesson from DB (no regeneration)
 export async function GET(request: NextRequest) {
@@ -29,8 +30,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(null, { status: 404 })
   }
 
+  const cachedContent = (lesson as Record<string, string>).content
+  try {
+    const parsed = JSON.parse(cachedContent) as Partial<LessonResponse>
+    if (parsed && typeof parsed === "object" && parsed.theory) {
+      return NextResponse.json({
+        ...parsed,
+        cached: true,
+        createdAt: (lesson as Record<string, string>).created_at,
+      })
+    }
+  } catch {
+    // fall back to legacy theory-only content below
+  }
+
   return NextResponse.json({
-    theory: (lesson as Record<string, string>).content,
+    theory: cachedContent,
     cached: true,
     createdAt: (lesson as Record<string, string>).created_at,
   })
@@ -67,6 +82,9 @@ export async function POST(request: NextRequest) {
     if (!mission) {
       return NextResponse.json({ error: "Mission not found" }, { status: 404 })
     }
+    const localizedMission = getLocalizedMission(mission, language === "hu" ? "hu" : "en")
+    const levelBand = getMissionLevelBand(missionId)
+    const recommendedLevel = getMissionRecommendedLevel(missionId)
 
     // Get real student data
     const { data: profile } = await supabase
@@ -103,12 +121,12 @@ export async function POST(request: NextRequest) {
       completedFeatures: completedFeatures.slice(-5),
     }
 
-    const knowledgeSnippets = mission.officialSources.map(
+    const knowledgeSnippets = localizedMission.officialSources.map(
       (url) => `Source: ${url}\n(Content fetched from official documentation)`
     )
 
-    const systemPrompt = buildLessonSystemPrompt(lang, level)
-    const userPrompt = buildLessonUserPrompt(mission, student, projectContext, knowledgeSnippets)
+    const systemPrompt = buildLessonSystemPrompt(lang, recommendedLevel)
+    const userPrompt = buildLessonUserPrompt(localizedMission, student, projectContext, knowledgeSnippets, levelBand)
 
     const lesson = await generateStructuredResponse<LessonResponse>(systemPrompt, userPrompt, {
       temperature: 0.7,
@@ -120,7 +138,7 @@ export async function POST(request: NextRequest) {
     await (supabase as any).from("generated_lessons").upsert({
       user_id: user.id,
       mission_id: missionId,
-      content: lesson.theory,
+      content: JSON.stringify(lesson),
       python_version: "3.12",
       library_versions: {},
       documentation_version: "2025.1",
@@ -128,15 +146,10 @@ export async function POST(request: NextRequest) {
       source_urls: mission.officialSources,
     }, { onConflict: "user_id,mission_id" })
 
-    // Create/update mission progress
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("mission_progress").upsert({
-      user_id: user.id,
-      mission_id: missionId,
+    await upsertMissionProgress(supabase, user.id, missionId, {
       status: "IN_PROGRESS",
-      lesson_viewed: true,
-      started_at: new Date().toISOString(),
-    }, { onConflict: "user_id,mission_id" })
+      lessonViewed: true,
+    })
 
     return NextResponse.json({
       ...lesson,
@@ -144,6 +157,11 @@ export async function POST(request: NextRequest) {
         missionId: mission.id,
         promptVersion: LESSON_PROMPT_VERSION,
         pythonVersion: "3.12",
+        recommendedLevel: {
+          label: levelBand.label,
+          min: levelBand.min,
+          max: levelBand.max,
+        },
         generatedAt: new Date().toISOString(),
       },
     })

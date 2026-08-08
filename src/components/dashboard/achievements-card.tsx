@@ -2,22 +2,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Trophy, Lock } from "lucide-react"
 import type { UserBadge } from "@/types"
+import type { Language } from "@/lib/i18n/translations"
 
 interface AchievementsCardProps {
   unlockedBadges: UserBadge[]
   nextBadge: UserBadge | null
+  lang: Language
 }
 
 export function AchievementsCard({
   unlockedBadges,
   nextBadge,
+  lang,
 }: AchievementsCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <Trophy className="h-4 w-4" />
-          Achievements
+          {lang === "hu" ? "Kitüntetések" : "Achievements"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -43,7 +46,7 @@ export function AchievementsCard({
             </div>
             <Progress value={nextBadge.progress} className="h-1.5 mb-1" />
             <p className="text-xs text-muted-foreground">
-              {nextBadge.progress}% unlocked
+              {nextBadge.progress}% {lang === "hu" ? "feloldva" : "unlocked"}
             </p>
           </div>
         )}

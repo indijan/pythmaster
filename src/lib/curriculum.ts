@@ -1,5 +1,11 @@
 import type { MissionDefinition } from "@/types"
 
+export interface MissionLevelBand {
+  min: number
+  max: number
+  label: string
+}
+
 export const PHASES = [
   { name: "Python Foundations", description: "Core Python syntax and programming concepts", missions: [1, 2, 3, 4, 5, 6, 7, 8] },
   { name: "Data Structures", description: "Working with collections and iterators", missions: [9, 10, 11, 12, 13, 14] },
@@ -8,6 +14,448 @@ export const PHASES = [
   { name: "ETL Pipelines", description: "Extract, transform, load workflows", missions: [24, 25, 26, 27] },
   { name: "Production", description: "APIs, containers, testing, deployment", missions: [28, 29, 30, 31] },
 ]
+
+export type CurriculumLanguage = "en" | "hu"
+
+const PHASE_COPY_HU: Record<string, { name: string; description: string }> = {
+  "Python Foundations": {
+    name: "Python alapok",
+    description: "A Python szintaxisának és a programozás alapfogalmainak elsajátítása",
+  },
+  "Data Structures": {
+    name: "Adatszerkezetek",
+    description: "Gyűjtemények és iterátorok használata",
+  },
+  "Files & APIs": {
+    name: "Fájlok és API-k",
+    description: "Adatok beolvasása fájlokból és webszolgáltatásokból",
+  },
+  "Data Engineering": {
+    name: "Adatmérnökség",
+    description: "Professzionális adatkezelő eszközök és könyvtárak",
+  },
+  "ETL Pipelines": {
+    name: "ETL folyamatok",
+    description: "Kinyerés, átalakítás és betöltés munkafolyamatok",
+  },
+  Production: {
+    name: "Éles üzem",
+    description: "API-k, konténerek, tesztelés és telepítés",
+  },
+}
+
+type MissionCopy = Pick<MissionDefinition, "title" | "goal" | "learningObjectives" | "projectFeature">
+
+const MISSION_COPY_HU: Record<number, MissionCopy> = {
+  1: {
+    title: "Szia, Python!",
+    goal: "Írd meg az első Python programodat és értsd meg, mi az a változó.",
+    learningObjectives: [
+      "Használd a print() függvényt",
+      "Hozz létre és adj értéket változóknak",
+      "Értsd meg az alap adattípusokat (str, int, float)",
+      "Írj kommenteket",
+    ],
+    projectFeature: "Üdvözlő üzenet megjelenítése a Crypto Exchange Analyzerben.",
+  },
+  2: {
+    title: "Adattípusok és operátorok",
+    goal: "Dolgozz különböző adattípusokkal és végezz számításokat.",
+    learningObjectives: [
+      "Használd az int, float, str és bool típusokat",
+      "Végezz aritmetikai műveleteket",
+      "Használd az összehasonlító operátorokat",
+      "Típuskonverzió int(), float() és str() segítségével",
+    ],
+    projectFeature: "Alap kriptó-mutatók számítása (árkülönbség, százalékos változás).",
+  },
+  3: {
+    title: "Bemenet és kimenet",
+    goal: "Készíts interaktív programokat, amelyek felhasználói bemenetre reagálnak.",
+    learningObjectives: [
+      "Használd az input() függvényt felhasználói adatok bekérésére",
+      "Formázd a szöveget f-stringekkel",
+      "Kezeld a bemenet típuskonverzióját",
+      "Alapvető hibamegelőzés",
+    ],
+    projectFeature: "Kérj be egy kripto szimbólumot és jeleníts meg formázott árinfót.",
+  },
+  4: {
+    title: "Döntési motor",
+    goal: "Készíts olyan programokat, amelyek feltételek alapján döntenek.",
+    learningObjectives: [
+      "Használd az if, elif, else utasításokat",
+      "Kombináld a feltételeket and, or, not operátorokkal",
+      "Építs beágyazott feltételeket",
+      "Értsd a truthy és falsy értékeket",
+    ],
+    projectFeature: "Kereskedési jelzőmotor építése: BUY, SELL vagy HOLD árküszöbök alapján.",
+  },
+  5: {
+    title: "Ciklusok",
+    goal: "Automatizáld az ismétlődő feladatokat ciklusokkal.",
+    learningObjectives: [
+      "Használj for ciklusokat range()-gel",
+      "Iterálj stringeken és listákon",
+      "Használj while ciklusokat",
+      "break és continue utasítások",
+    ],
+    projectFeature: "Több kriptoár feldolgozása ciklusban és átlag számítása.",
+  },
+  6: {
+    title: "Listák",
+    goal: "Tárold és kezeld a rendezett adathalmazokat.",
+    learningObjectives: [
+      "Hozz létre és érj el listákat",
+      "Lista metódusok: append, remove, pop, sort",
+      "Listaszeletelés [start:stop:step]",
+      "Beágyazott listák",
+    ],
+    projectFeature: "Történelmi árak tárolása listában és egyszerű mozgóátlag számítása.",
+  },
+  7: {
+    title: "Függvények",
+    goal: "Írj újrahasznosítható, rendezett kódot függvényekkel.",
+    learningObjectives: [
+      "Definiálj függvényeket def segítségével",
+      "Paraméterek és argumentumok",
+      "Visszatérési értékek",
+      "Hatókör (lokális vs globális változók)",
+    ],
+    projectFeature: "Árkalkulációk áthelyezése újrahasználható függvényekbe.",
+  },
+  8: {
+    title: "Hibakezelés",
+    goal: "Írj robusztus kódot, amely elegánsan kezeli a hibákat.",
+    learningObjectives: [
+      "Használj try/except blokkokat",
+      "Kezeld a specifikus kivételeket",
+      "Használd az else és finally ágakat",
+      "Dobj kivételeket szándékosan",
+    ],
+    projectFeature: "Bemenet-ellenőrzés és hibakezelés a kripto analizátorban.",
+  },
+  9: {
+    title: "Tuple-ök és halmazok",
+    goal: "Használj immutábilis sorozatokat és egyedi gyűjteményeket.",
+    learningObjectives: [
+      "Tuple-ök létrehozása és használata",
+      "Tuple unpacking",
+      "Halmazok létrehozása és használata",
+      "Halmazműveletek (unió, metszet, különbség)",
+    ],
+    projectFeature: "Kereskedési párok tuple-ökben tárolása és egyedi tőzsdék követése halmazokkal.",
+  },
+  10: {
+    title: "Szótárak",
+    goal: "Sajátítsd el a kulcs-érték alapú adattárolást.",
+    learningObjectives: [
+      "Szótárak létrehozása és elérése",
+      "Szótár metódusok: get, keys, values, items",
+      "Beágyazott szótárak",
+      "Szótár-comprehension (bevezetés)",
+    ],
+    projectFeature: "Kriptoportfólió-követő építése szótárakkal.",
+  },
+  11: {
+    title: "Comprehensionök",
+    goal: "Írj tömör, Pythonos adattranszformációkat.",
+    learningObjectives: [
+      "List comprehensionök",
+      "Dict comprehensionök",
+      "Set comprehensionök",
+      "Szűrés if-fel comprehensionökben",
+    ],
+    projectFeature: "Tőzsdei adatok hatékony átalakítása comprehensionök segítségével.",
+  },
+  12: {
+    title: "Iterátorok és generátorok",
+    goal: "Értsd meg a lusta kiértékelést és a memóriatakarékos iterációt.",
+    learningObjectives: [
+      "iter() és next()",
+      "Generátorok létrehozása yield-del",
+      "Generator expressionök",
+      "Memóriahatékonysági alapok",
+    ],
+    projectFeature: "Nagy ár-adathalmazok streamelése generátorokkal.",
+  },
+  13: {
+    title: "Stringkezelés",
+    goal: "Sajátítsd el a szövegfeldolgozás technikáit.",
+    learningObjectives: [
+      "String metódusok: split, join, strip, replace",
+      "Reguláris kifejezések a re modullal",
+      "Szövegformázási technikák",
+      "Unicode-kezelés alapjai",
+    ],
+    projectFeature: "Tőzsdenevek és kereskedési párok tisztítása és feldolgozása.",
+  },
+  14: {
+    title: "Collections modul",
+    goal: "Használd a standard library speciális gyűjteményeit.",
+    learningObjectives: [
+      "namedtuple könnyű objektumokhoz",
+      "defaultdict alapértelmezett értékekhez",
+      "Counter számoláshoz",
+      "deque hatékony sorokhoz",
+    ],
+    projectFeature: "Kereskedési gyakoriság követése Counterrel és order book kezelése deque-vel.",
+  },
+  15: {
+    title: "Fájlkezelés",
+    goal: "Olvass és írj fájlokat a lemezen.",
+    learningObjectives: [
+      "Fájlok megnyitása open() segítségével",
+      "Olvasási és írási módok: r, w, a",
+      "with utasítás használata (context manager)",
+      "Sorok beolvasása és szövegfájlok feldolgozása",
+    ],
+    projectFeature: "Tőzsdei adatok mentése és betöltése szövegfájlokból.",
+  },
+  16: {
+    title: "CSV feldolgozás",
+    goal: "Dolgozz táblázatos adatokkal a csv modullal.",
+    learningObjectives: [
+      "CSV beolvasása csv.reader()-rel",
+      "CSV írása csv.writer-rel",
+      "DictReader és DictWriter",
+      "Fejlécek és kódolás kezelése",
+    ],
+    projectFeature: "Árfolyamtörténet importálása CSV-fájlokból.",
+  },
+  17: {
+    title: "JSON és API-k",
+    goal: "Dolgozz JSON adatokkal és HTTP kérésekkel.",
+    learningObjectives: [
+      "JSON feldolgozása json.loads() segítségével",
+      "Szerializálás json.dumps() segítségével",
+      "HTTP kérések küldése a requests könyvtárral",
+      "API válaszok és státuszkódok kezelése",
+    ],
+    projectFeature: "Élő kriptoárak lekérése publikus REST API-ból.",
+  },
+  18: {
+    title: "API hitelesítés és rate limit",
+    goal: "Hitelesített API-kkal dolgozz és kezeld a sebességkorlátokat.",
+    learningObjectives: [
+      "API kulcsos hitelesítés",
+      "Rate limit kezelés time.sleep()-pel",
+      "Hibakezelés API hibákra",
+      "Környezeti változók használata os.getenv()-gel",
+    ],
+    projectFeature: "CoinGecko vagy Binance API csatlakoztatása megfelelő hibakezeléssel.",
+  },
+  19: {
+    title: "NumPy alapok",
+    goal: "Végezz gyors numerikus számításokat NumPy-val.",
+    learningObjectives: [
+      "NumPy tömbök létrehozása",
+      "Tömbműveletek és broadcasting",
+      "Statisztikai függvények (mean, std, median)",
+      "Logikai indexelés",
+    ],
+    projectFeature: "Haladó árstatisztikák számítása NumPy tömbökkel.",
+  },
+  20: {
+    title: "Pandas alapok",
+    goal: "Sajátítsd el a DataFrame-eket táblázatos elemzéshez.",
+    learningObjectives: [
+      "DataFrame létrehozása dictből, listából vagy CSV-ből",
+      "Oszlopok és sorok kiválasztása (loc, iloc)",
+      "Adatok szűrése és rendezése",
+      "Alap aggregációk (groupby)",
+    ],
+    projectFeature: "Teljes kriptoadat-elemzési pipeline építése Pandasszal.",
+  },
+  21: {
+    title: "Haladó Pandas",
+    goal: "Fejlett adatmanipuláció Pandasszal.",
+    learningObjectives: [
+      "DataFrame-ek egyesítése és joinolása",
+      "Pivot táblák",
+      "Idősoros adatok kezelése",
+      "Apply és transform",
+    ],
+    projectFeature: "Több adatforrás egyesítése és pivot riportok készítése.",
+  },
+  22: {
+    title: "DuckDB",
+    goal: "SQL-lel kérdezz le adatokat egy beágyazott analitikus adatbázison.",
+    learningObjectives: [
+      "Kapcsolódás DuckDB-hez",
+      "SQL lekérdezések futtatása DataFrame-eken",
+      "CSV és Parquet import/export",
+      "Aggregációk és window függvények",
+    ],
+    projectFeature: "Összetett SQL analitika futtatása kriptoadatokon DuckDB-vel.",
+  },
+  23: {
+    title: "PyArrow és Parquet",
+    goal: "Dolgozz oszlopos adatformátumokkal nagy teljesítménnyel.",
+    learningObjectives: [
+      "Parquet fájlok olvasása és írása",
+      "Arrow táblák vs Pandas",
+      "Oszlopos adatfogalmak",
+      "Teljesítmény-összehasonlítás",
+    ],
+    projectFeature: "Történelmi adatok tárolása és lekérdezése Parquet formátumban.",
+  },
+  24: {
+    title: "Adattisztítás",
+    goal: "Tisztítsd és készítsd elő a zavaros valós adatokat.",
+    learningObjectives: [
+      "Hiányzó értékek kezelése",
+      "Duplikátumok eltávolítása",
+      "Adattípusok javítása",
+      "Outlier detektálás",
+    ],
+    projectFeature: "Nyers tőzsdei adatok tisztítása több forrásból.",
+  },
+  25: {
+    title: "Adatvalidáció",
+    goal: "Programból ellenőrizd az adatok minőségét.",
+    learningObjectives: [
+      "Séma-validációs alapok",
+      "Validációs szabályok írása",
+      "Adatminőségi metrikák",
+      "Validációs jelentések készítése",
+    ],
+    projectFeature: "Beérkező tőzsdei adatok ellenőrzése feldolgozás előtt.",
+  },
+  26: {
+    title: "Transzformációk",
+    goal: "Építs újrahasználható adattranszformációs pipeline-okat.",
+    learningObjectives: [
+      "Transzformációk láncolása",
+      "Feature engineering alapok",
+      "Normalizálás és skálázás",
+      "Dátum/idő transzformációk",
+    ],
+    projectFeature: "Feature engineering pipeline építése kereskedési jelekhez.",
+  },
+  27: {
+    title: "ETL pipeline-tervezés",
+    goal: "Tervezz és implementálj teljes ETL folyamatokat.",
+    learningObjectives: [
+      "Kinyerés több forrásból",
+      "Átalakítás validációval",
+      "Betöltés adatbázisba vagy fájlokba",
+      "Pipeline-orchestráció alapok",
+    ],
+    projectFeature: "Teljes ETL pipeline: lekérés → tisztítás → tárolás kriptoadatokra.",
+  },
+  28: {
+    title: "FastAPI alapok",
+    goal: "Építs REST API-kat FastAPI-val.",
+    learningObjectives: [
+      "FastAPI alkalmazás létrehozása",
+      "Route-ok és path paraméterek definiálása",
+      "Request/response modellek Pydantic-kal",
+      "Automatikus dokumentáció",
+    ],
+    projectFeature: "REST API készítése kriptoanalitikai eredmények kiszolgálására.",
+  },
+  29: {
+    title: "Haladó FastAPI",
+    goal: "Production-ready API middleware-rel és háttérfeladatokkal.",
+    learningObjectives: [
+      "Dependency injection",
+      "Middleware",
+      "Háttérfeladatok",
+      "Hibakezelő middleware",
+    ],
+    projectFeature: "Cache és rate limit hozzáadása a kripto API-hoz.",
+  },
+  30: {
+    title: "Docker",
+    goal: "Konténerizáld a Python alkalmazásokat.",
+    learningObjectives: [
+      "Dockerfile írása",
+      "Konténerek buildelése és futtatása",
+      "Docker Compose több szolgáltatáshoz",
+      "Volume mountolás fejlesztéshez",
+    ],
+    projectFeature: "A kriptoanalizátor API dockerizálása Docker Compose-szal.",
+  },
+  31: {
+    title: "Tesztelés és telepítés",
+    goal: "Írj teszteket és telepíts éles környezetbe.",
+    learningObjectives: [
+      "Egységtesztek írása pytest-tel",
+      "Fixture-ök és mocking",
+      "CI/CD pipeline fogalmak",
+      "Telepítés felhőbe (Railway/Render)",
+    ],
+    projectFeature: "Tesztek írása az analizátorhoz és éles telepítés.",
+  },
+}
+
+export function getLocalizedPhase(phase: string, lang: CurriculumLanguage = "en"): { name: string; description: string } {
+  if (lang === "hu") {
+    return PHASE_COPY_HU[phase] || { name: phase, description: phase }
+  }
+  const original = PHASES.find((p) => p.name === phase)
+  return original ? { name: original.name, description: original.description } : { name: phase, description: phase }
+}
+
+export function getLocalizedMission(
+  mission: MissionDefinition,
+  lang: CurriculumLanguage = "en"
+): MissionDefinition {
+  if (lang !== "hu") return mission
+  const copy = MISSION_COPY_HU[mission.id]
+  if (!copy) return mission
+  return {
+    ...mission,
+    title: copy.title,
+    goal: copy.goal,
+    learningObjectives: copy.learningObjectives,
+    projectFeature: copy.projectFeature,
+  }
+}
+
+const LEVEL_BANDS: Record<number, MissionLevelBand> = {
+  1: { min: 1, max: 2, label: "Absolute beginner" },
+  2: { min: 1, max: 2, label: "Absolute beginner" },
+  3: { min: 2, max: 3, label: "Early beginner" },
+  4: { min: 2, max: 3, label: "Early beginner" },
+  5: { min: 3, max: 4, label: "Confident beginner" },
+  6: { min: 3, max: 4, label: "Confident beginner" },
+  7: { min: 4, max: 5, label: "Intermediate" },
+  8: { min: 4, max: 5, label: "Intermediate" },
+  9: { min: 4, max: 5, label: "Intermediate" },
+  10: { min: 4, max: 5, label: "Intermediate" },
+  11: { min: 4, max: 5, label: "Intermediate" },
+  12: { min: 4, max: 5, label: "Intermediate" },
+  13: { min: 4, max: 5, label: "Intermediate" },
+  14: { min: 4, max: 5, label: "Intermediate" },
+  15: { min: 5, max: 6, label: "Upper intermediate" },
+  16: { min: 5, max: 6, label: "Upper intermediate" },
+  17: { min: 5, max: 6, label: "Upper intermediate" },
+  18: { min: 5, max: 6, label: "Upper intermediate" },
+  19: { min: 5, max: 6, label: "Upper intermediate" },
+  20: { min: 5, max: 6, label: "Upper intermediate" },
+  21: { min: 6, max: 7, label: "Advanced" },
+  22: { min: 6, max: 7, label: "Advanced" },
+  23: { min: 6, max: 7, label: "Advanced" },
+  24: { min: 6, max: 7, label: "Advanced" },
+  25: { min: 6, max: 7, label: "Advanced" },
+  26: { min: 6, max: 7, label: "Advanced" },
+  27: { min: 6, max: 7, label: "Advanced" },
+  28: { min: 6, max: 7, label: "Advanced" },
+  29: { min: 6, max: 7, label: "Advanced" },
+  30: { min: 6, max: 7, label: "Advanced" },
+  31: { min: 6, max: 7, label: "Advanced" },
+}
+
+export function getMissionLevelBand(missionId: number): MissionLevelBand {
+  return LEVEL_BANDS[missionId] || { min: 1, max: 2, label: "Absolute beginner" }
+}
+
+export function getMissionRecommendedLevel(missionId: number): number {
+  const band = getMissionLevelBand(missionId)
+  return Math.round((band.min + band.max) / 2)
+}
 
 export const MISSIONS: MissionDefinition[] = [
   // ===== PHASE 1: Python Foundations =====

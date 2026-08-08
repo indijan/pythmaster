@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, FileText, Trophy, FolderGit2, Code2, Clock } from "lucide-react"
 import type { RecentActivity } from "@/types"
+import type { Language } from "@/lib/i18n/translations"
 
 interface RecentActivityCardProps {
   activities: RecentActivity[]
+  lang: Language
 }
 
 const activityIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -22,19 +24,21 @@ const activityColors: Record<string, string> = {
   challenge_solved: "text-orange-500",
 }
 
-export function RecentActivityCard({ activities }: RecentActivityCardProps) {
+export function RecentActivityCard({ activities, lang }: RecentActivityCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <Clock className="h-4 w-4" />
-          Recent Activity
+          {lang === "hu" ? "Legutóbbi aktivitás" : "Recent Activity"}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {activities.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No activity yet. Start your first mission!
+            {lang === "hu"
+              ? "Még nincs aktivitás. Indítsd el az első küldetésed!"
+              : "No activity yet. Start your first mission!"}
           </p>
         ) : (
           <ul className="space-y-2">
@@ -47,7 +51,7 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
                   <div>
                     <p>{activity.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(activity.timestamp).toLocaleDateString("en-US", {
+                      {new Date(activity.timestamp).toLocaleDateString(lang === "hu" ? "hu-HU" : "en-US", {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",

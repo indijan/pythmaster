@@ -1,19 +1,12 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getMissionById, getPrerequisites, PHASES } from "@/lib/curriculum"
-import {
-  getMissionStatus,
-  getNextMission,
-  getCompletedFeatures,
-  getUpcomingFeatures,
-  getProjectVersion,
-} from "@/lib/mission-engine"
+import { getMissionById, getPrerequisites, getMissionLevelBand, getMissionsByPhase, getLocalizedMission, getLocalizedPhase } from "@/lib/curriculum"
+import { getMissionStatus, getNextMission } from "@/lib/mission-engine"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
 import { MissionLessonWrapper } from "@/components/mission-lesson-wrapper"
+import { getServerLanguage } from "@/lib/i18n/server"
 import {
   Clock,
   Star,
@@ -49,6 +42,7 @@ interface MissionPageProps {
 }
 
 export default async function MissionPage({ params }: MissionPageProps) {
+  const lang = await getServerLanguage()
   const { id } = await params
   const missionId = parseInt(id, 10)
   const mission = getMissionById(missionId)
@@ -58,6 +52,9 @@ export default async function MissionPage({ params }: MissionPageProps) {
   }
 
   const prerequisites = getPrerequisites(missionId)
+  const levelBand = getMissionLevelBand(missionId)
+  const localizedMission = getLocalizedMission(mission, lang)
+  const localizedPhase = getLocalizedPhase(mission.phase, lang)
 
   // Mock: completed mission IDs for demo
   const completedMissionIds = Array.from(
@@ -69,9 +66,6 @@ export default async function MissionPage({ params }: MissionPageProps) {
   const nextMission = getNextMission(missionId, completedMissionIds)
   const isLocked = status === "LOCKED"
 
-  const allMissionIds = Array.from({ length: 31 }, (_, i) => i + 1)
-  const completedCount = completedMissionIds.length
-
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6 space-y-6">
       {/* Breadcrumb & Navigation */}
@@ -79,7 +73,7 @@ export default async function MissionPage({ params }: MissionPageProps) {
         <Link href="/mission">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            All Missions
+            {lang === "hu" ? "Összes küldetés" : "All Missions"}
           </Button>
         </Link>
         <div className="flex items-center gap-2">
@@ -87,14 +81,14 @@ export default async function MissionPage({ params }: MissionPageProps) {
             <Link href={`/mission/${missionId - 1}`}>
               <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Previous
+                {lang === "hu" ? "Előző" : "Previous"}
               </Button>
             </Link>
           )}
           {nextMission && (
             <Link href={`/mission/${nextMission.id}`}>
               <Button variant="outline" size="sm">
-                Next
+                {lang === "hu" ? "Következő" : "Next"}
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
@@ -106,17 +100,17 @@ export default async function MissionPage({ params }: MissionPageProps) {
       <div>
         <div className="flex flex-wrap items-center gap-3 mb-2">
           <Badge variant="outline" className="font-mono text-xs">
-            Mission {mission.id}
+            {lang === "hu" ? "Küldetés" : "Mission"} {mission.id}
           </Badge>
           <Badge variant="secondary" className="text-xs">
-            {mission.phase}
+            {localizedPhase.name}
           </Badge>
           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[status]}`}>
             {status === "LOCKED" && <Lock className="h-3 w-3 inline mr-1" />}
             {status.replace("_", " ")}
           </span>
         </div>
-        <h1 className="text-3xl font-bold mb-2">{mission.title}</h1>
+        <h1 className="text-3xl font-bold mb-2">{localizedMission.title}</h1>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
@@ -138,9 +132,13 @@ export default async function MissionPage({ params }: MissionPageProps) {
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="p-6 text-center">
             <Lock className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-            <h2 className="text-lg font-semibold mb-2">Mission Locked</h2>
+            <h2 className="text-lg font-semibold mb-2">
+              {lang === "hu" ? "Küldetés zárolva" : "Mission Locked"}
+            </h2>
             <p className="text-muted-foreground mb-4">
-              Complete the following missions first:
+              {lang === "hu"
+                ? "Előbb teljesítsd ezeket a küldetéseket:"
+                : "Complete the following missions first:"}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {prerequisites.map((preReq) => (
@@ -158,7 +156,7 @@ export default async function MissionPage({ params }: MissionPageProps) {
                     ) : (
                       <Lock className="h-3 w-3 mr-1" />
                     )}
-                    Mission {preReq.id}: {preReq.title}
+                    {lang === "hu" ? "Küldetés" : "Mission"} {preReq.id}: {getLocalizedMission(preReq, lang).title}
                   </Badge>
                 </Link>
               ))}
@@ -172,10 +170,21 @@ export default async function MissionPage({ params }: MissionPageProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Target className="h-5 w-5 text-primary" />
-            Learning Goal
+            {lang === "hu" ? "Tanulási cél" : "Learning Goal"}
           </CardTitle>
           <CardDescription className="text-base">
-            {mission.goal}
+            {localizedMission.goal}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            {lang === "hu" ? "Ajánlott Python szint" : "Recommended Python Level"}
+          </CardTitle>
+          <CardDescription className="text-base">
+            {levelBand.label} ({levelBand.min}-{levelBand.max})
           </CardDescription>
         </CardHeader>
       </Card>
@@ -183,11 +192,13 @@ export default async function MissionPage({ params }: MissionPageProps) {
       {/* Learning Objectives */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">What You&apos;ll Learn</CardTitle>
+          <CardTitle className="text-lg">
+            {lang === "hu" ? "Mit fogsz megtanulni" : "What You&apos;ll Learn"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2">
-            {mission.learningObjectives.map((obj, i) => (
+            {localizedMission.learningObjectives.map((obj, i) => (
               <li key={i} className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-500 shrink-0" />
                 <span>{obj}</span>
@@ -202,10 +213,10 @@ export default async function MissionPage({ params }: MissionPageProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <BookOpen className="h-5 w-5 text-primary" />
-            Project Milestone
+            {lang === "hu" ? "Projekt mérföldkő" : "Project Milestone"}
           </CardTitle>
           <CardDescription className="text-base">
-            {mission.projectFeature}
+            {localizedMission.projectFeature}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -214,7 +225,7 @@ export default async function MissionPage({ params }: MissionPageProps) {
       {prerequisites.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Prerequisites</CardTitle>
+            <CardTitle className="text-lg">{lang === "hu" ? "Előfeltételek" : "Prerequisites"}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -233,7 +244,7 @@ export default async function MissionPage({ params }: MissionPageProps) {
       {/* Official Sources */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Official Sources</CardTitle>
+            <CardTitle className="text-lg">{lang === "hu" ? "Hivatalos források" : "Official Sources"}</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-1">
@@ -263,10 +274,11 @@ export default async function MissionPage({ params }: MissionPageProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {MISSION_LIST_IN_PHASE(mission.phase).map((m) => {
-              const mStatus = getMissionStatus(m.id, completedMissionIds)
-              const isCurrent = m.id === missionId
-              return (
+              {MISSION_LIST_IN_PHASE(mission.phase).map((m) => {
+                const localized = getLocalizedMission(m, lang)
+                const mStatus = getMissionStatus(m.id, completedMissionIds)
+                const isCurrent = m.id === missionId
+                return (
                 <Link key={m.id} href={`/mission/${m.id}`}>
                   <div
                     className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
@@ -290,7 +302,7 @@ export default async function MissionPage({ params }: MissionPageProps) {
                           isCurrent ? "font-medium" : ""
                         }`}
                       >
-                        {m.title}
+                        {localized.title}
                       </span>
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
@@ -308,10 +320,11 @@ export default async function MissionPage({ params }: MissionPageProps) {
       {!isLocked && status !== "COMPLETED" && (
         <MissionLessonWrapper
           missionId={mission.id}
-          missionTitle={mission.title}
-          learningObjectives={mission.learningObjectives}
-          projectFeature={mission.projectFeature}
-          startLabel={status === "AVAILABLE" ? "Start Mission" : "Continue Mission"}
+          missionTitle={localizedMission.title}
+          learningObjectives={localizedMission.learningObjectives}
+          projectFeature={localizedMission.projectFeature}
+          requiredQuizScore={mission.requiredQuizScore}
+          startLabel={status === "AVAILABLE" ? (lang === "hu" ? "Küldetés indítása" : "Start Mission") : (lang === "hu" ? "Küldetés folytatása" : "Continue Mission")}
         />
       )}
 
@@ -319,7 +332,7 @@ export default async function MissionPage({ params }: MissionPageProps) {
         <div className="flex justify-center pt-4">
           <Badge className="px-6 py-3 text-base">
             <CheckCircle2 className="h-5 w-5 mr-2" />
-            Mission Completed 🎉
+            {lang === "hu" ? "Küldetés teljesítve 🎉" : "Mission Completed 🎉"}
           </Badge>
         </div>
       )}
@@ -329,6 +342,5 @@ export default async function MissionPage({ params }: MissionPageProps) {
 
 /** Helper: get missions in the same phase */
 function MISSION_LIST_IN_PHASE(phase: string) {
-  const { getMissionsByPhase } = require("@/lib/curriculum")
-  return getMissionsByPhase(phase) as import("@/types").MissionDefinition[]
+  return getMissionsByPhase(phase)
 }

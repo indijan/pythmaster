@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
       challengeDescription: string
       code: string
       hintsAlreadyGiven: number
+      language?: string
     }
 
     if (!missionId || !code) {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Mission not found" }, { status: 404 })
     }
 
-    const systemPrompt = buildHintSystemPrompt()
+    const systemPrompt = buildHintSystemPrompt(body.language === "hu" ? "Hungarian" : "English")
     const userPrompt = buildHintUserPrompt(
       mission,
       challengeDescription || mission.projectFeature,

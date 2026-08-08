@@ -52,9 +52,9 @@ function LoginPage() {
           <div className="flex justify-center mb-2">
             <Sparkles className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardTitle className="text-2xl">Üdv újra</CardTitle>
           <CardDescription>
-            Sign in to continue your Python journey
+            Jelentkezz be, hogy folytathasd a Python utazásodat
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
@@ -77,7 +77,7 @@ function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Jelszó</Label>
               <Input
                 id="password"
                 type="password"
@@ -94,16 +94,16 @@ function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Signing in...
+                  Bejelentkezés...
                 </>
               ) : (
-                "Sign in"
+                "Belépés"
               )}
             </Button>
             <p className="text-sm text-muted-foreground text-center">
-              Don&apos;t have an account?{" "}
+              Nincs még fiókod?{" "}
               <Link href="/register" className="text-primary hover:underline font-medium">
-                Create one
+                Hozz létre egyet
               </Link>
             </p>
           </CardFooter>

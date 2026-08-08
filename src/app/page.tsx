@@ -10,27 +10,27 @@ export default function HomePage() {
         <div className="container mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <Sparkles className="h-4 w-4" />
-            AI-Powered Learning Platform
+            AI-alapú tanulási platform
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Learn Python &amp;{" "}
+            Tanulj Python és{" "}
             <span className="text-primary">Data Engineering</span>{" "}
-            by Building
+            építés közben
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            One continuously evolving real-world application. No throwaway code.
-            Every lesson adds a feature. Finish with a portfolio-quality project.
+            Egy folyamatosan fejlődő valódi alkalmazás. Nincs eldobható kód.
+            Minden lecke új funkciót ad hozzá. A végén portfólió minőségű projekted lesz.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
               <Button size="lg">
-                Start Learning Free
+                Kezdd el ingyen
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
             <Link href="/login">
               <Button size="lg" variant="outline">
-                Continue Learning
+                Tanulás folytatása
               </Button>
             </Link>
           </div>
@@ -45,30 +45,30 @@ export default function HomePage() {
               <div className="inline-flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 text-primary mb-4">
                 <BookOpen className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Project-Driven</h3>
+              <h3 className="font-semibold text-lg mb-2">Projektvezérelt</h3>
               <p className="text-muted-foreground text-sm">
-                Build the Crypto Exchange Analyzer step by step. Every mission
-                extends one application.
+                A Crypto Exchange Analyzer lépésről lépésre épül. Minden küldetés
+                ugyanazt az alkalmazást bővíti.
               </p>
             </div>
             <div className="text-center p-6">
               <div className="inline-flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 text-primary mb-4">
                 <Code2 className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">AI Mentor</h3>
+              <h3 className="font-semibold text-lg mb-2">AI mentor</h3>
               <p className="text-muted-foreground text-sm">
-                Your personal AI senior developer — explains, reviews, encourages,
-                and adapts to your pace.
+                A személyes AI senior fejlesztőd elmagyaráz, ellenőriz, bátorít,
+                és a tempódhoz igazodik.
               </p>
             </div>
             <div className="text-center p-6">
               <div className="inline-flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 text-primary mb-4">
                 <Rocket className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Portfolio First</h3>
+              <h3 className="font-semibold text-lg mb-2">Portfólió az első</h3>
               <p className="text-muted-foreground text-sm">
-                Finish with a resume-ready skill profile and a production-style
-                project to show employers.
+                A végén önéletrajzba tehető készségprofilod és production stílusú
+                projekted lesz, amit megmutathatsz a munkáltatóknak.
               </p>
             </div>
           </div>
@@ -78,28 +78,28 @@ export default function HomePage() {
       {/* Curriculum Preview */}
       <section className="w-full py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-bold mb-4">What You&apos;ll Learn</h2>
+          <h2 className="text-3xl font-bold mb-4">Mit fogsz megtanulni</h2>
           <p className="text-muted-foreground mb-10">
-            38 missions across 6 phases — from zero to Data Engineer
+            38 küldetés 6 fázisban - nulláról Data Engineer szintig
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
-              "Variables",
-              "Data Types",
-              "Input / Output",
-              "Conditions",
-              "Loops",
-              "Functions",
-              "Lists & Dicts",
-              "CSV & JSON",
-              "REST APIs",
-              "NumPy & Pandas",
+              "Változók",
+              "Adattípusok",
+              "Bemenet / kimenet",
+              "Feltételek",
+              "Ciklusok",
+              "Függvények",
+              "Listák és szótárak",
+              "CSV és JSON",
+              "REST API-k",
+              "NumPy és Pandas",
               "DuckDB",
-              "ETL Pipelines",
+              "ETL pipeline-ok",
               "FastAPI",
               "Docker",
-              "Testing",
-              "Deployment",
+              "Tesztelés",
+              "Deploy",
             ].map((topic) => (
               <div
                 key={topic}
@@ -116,14 +116,14 @@ export default function HomePage() {
       <section className="w-full py-16 px-4">
         <div className="container mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-bold mb-4">
-            Ready to start your Python journey?
+            Készen állsz elkezdeni a Python utazást?
           </h2>
           <p className="text-muted-foreground mb-6">
-            Join learners who build real software instead of memorizing syntax.
+            Csatlakozz azokhoz, akik valódi szoftvert építenek a szintaxis biflázása helyett.
           </p>
           <Link href="/register">
             <Button size="lg">
-              Get Started — It&apos;s Free
+              Kezdd el - ingyenes
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </Link>

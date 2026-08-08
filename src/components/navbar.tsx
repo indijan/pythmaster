@@ -28,11 +28,10 @@ import {
   Trophy,
   Zap,
   Type,
-  Languages,
 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 
-import { useT, type Language } from "@/lib/i18n/context"
+import { useT } from "@/lib/i18n/context"
 
 type FontSize = "sm" | "md" | "lg" | "xl"
 
@@ -40,10 +39,10 @@ const fontSizes: Record<FontSize, string> = { sm: "text-xs", md: "", lg: "text-b
 const fontSizeLabels: Record<FontSize, string> = { sm: "A-", md: "A", lg: "A+", xl: "A++" }
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/mission", label: "Missions", icon: BookOpen },
-  { href: "/project", label: "Project", icon: FolderGit2 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/mission", key: "missions", icon: BookOpen },
+  { href: "/project", key: "project", icon: FolderGit2 },
+  { href: "/settings", key: "settings", icon: Settings },
 ]
 
 export function Navbar() {
@@ -75,6 +74,7 @@ export function Navbar() {
   }, [lang, setLang])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
@@ -99,7 +99,7 @@ export function Navbar() {
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    window.location.href = "/"
+    router.push("/")
   }
 
   return (
@@ -117,7 +117,7 @@ export function Navbar() {
               <Link key={item.href} href={item.href}>
                 <div className={`inline-flex items-center gap-1.5 px-2.5 h-7 text-[0.8rem] font-medium rounded-[min(var(--radius-md),12px)] transition-colors whitespace-nowrap ${isActive ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}>
                   <item.icon className="h-3.5 w-3.5" />
-                  {item.label}
+                  {t.nav[item.key as keyof typeof t.nav]}
                 </div>
               </Link>
             )
@@ -189,20 +189,20 @@ export function Navbar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push("/dashboard")}>
                   <LayoutDashboard className="h-4 w-4 mr-2" />
-                  Dashboard
+                  {t.nav.dashboard}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push("/settings")}>
                   <Settings className="h-4 w-4 mr-2" />
-                  Settings
+                  {t.nav.settings}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push("/project")}>
                   <Trophy className="h-4 w-4 mr-2" />
-                  Achievements
+                  {t.nav.achievements}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign out
+                  {t.nav.signOut}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -210,12 +210,12 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <Link href="/login">
                 <div className="inline-flex items-center gap-1 px-2.5 h-7 text-[0.8rem] font-medium rounded-[min(var(--radius-md),12px)] hover:bg-muted transition-colors">
-                  Sign in
+                  {t.nav.signIn}
                 </div>
               </Link>
               <Link href="/register">
                 <div className="inline-flex items-center gap-1.5 px-2.5 h-7 text-[0.8rem] font-medium rounded-[min(var(--radius-md),12px)] bg-primary text-primary-foreground hover:bg-primary/80 transition-colors">
-                  Get Started
+                  {t.nav.getStarted}
                 </div>
               </Link>
             </div>
@@ -233,7 +233,7 @@ export function Navbar() {
                     <Link key={item.href} href={item.href}>
                       <div className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}>
                         <item.icon className="h-4 w-4" />
-                        {item.label}
+                        {t.nav[item.key as keyof typeof t.nav]}
                       </div>
                     </Link>
                   )

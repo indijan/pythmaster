@@ -1,17 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FolderGit2, CheckCircle2, ArrowRight } from "lucide-react"
+import type { Language } from "@/lib/i18n/translations"
 
 interface ProjectCardProps {
   version: string
   completedFeatures: string[]
   upcomingFeatures: string[]
+  lang: Language
 }
 
 export function ProjectCard({
   version,
   completedFeatures,
   upcomingFeatures,
+  lang,
 }: ProjectCardProps) {
   return (
     <Card>
@@ -28,7 +31,7 @@ export function ProjectCard({
 
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-            Completed Features
+            {lang === "hu" ? "Elkészült funkciók" : "Completed Features"}
           </p>
           <ul className="space-y-1">
             {completedFeatures.map((f) => (
@@ -42,7 +45,7 @@ export function ProjectCard({
 
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-            Upcoming
+            {lang === "hu" ? "Következő" : "Upcoming"}
           </p>
           <ul className="space-y-1">
             {upcomingFeatures.map((f) => (

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Zap, Target } from "lucide-react"
+import type { Language } from "@/lib/i18n/translations"
 
 interface DailyGoalCardProps {
   description: string
@@ -10,6 +11,7 @@ interface DailyGoalCardProps {
     name: string
     progress: number
   }
+  lang: Language
 }
 
 export function DailyGoalCard({
@@ -17,13 +19,14 @@ export function DailyGoalCard({
   estimatedMinutes,
   xpReward,
   badgeProgress,
+  lang,
 }: DailyGoalCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <Target className="h-4 w-4" />
-          Today&apos;s Goal
+          {lang === "hu" ? "Mai cél" : "Today's Goal"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -39,7 +42,7 @@ export function DailyGoalCard({
           </Badge>
           {badgeProgress && (
             <Badge variant="outline" className="flex items-center gap-1">
-              🏅 {badgeProgress.name} Progress
+              🏅 {badgeProgress.name} {lang === "hu" ? "haladás" : "Progress"}
             </Badge>
           )}
         </div>

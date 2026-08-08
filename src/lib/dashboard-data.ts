@@ -53,7 +53,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
 
   const completedMissionIds = Array.from(progressMap.entries())
-    .filter(([_, p]) => p.status === "COMPLETED")
+    .filter(([, p]) => p.status === "COMPLETED")
     .map(([id]) => id)
 
   let currentMissionId = 1

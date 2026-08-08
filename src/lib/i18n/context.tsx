@@ -20,16 +20,29 @@ const LanguageContext = createContext<LanguageContextType>({
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Language>("en")
 
+  const syncLanguage = useCallback((value: Language) => {
+    document.documentElement.lang = value
+    document.cookie = `pythmaster-lang=${value}; path=/; max-age=31536000; samesite=lax`
+  }, [])
+
   useEffect(() => {
     const stored = localStorage.getItem("pythmaster-lang") as Language | null
-    if (stored === "en" || stored === "hu") setLangState(stored)
-  }, [])
+    if (stored === "en" || stored === "hu") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLangState(stored)
+      syncLanguage(stored)
+    }
+  }, [syncLanguage])
+
+  useEffect(() => {
+    syncLanguage(lang)
+  }, [lang, syncLanguage])
 
   const setLang = useCallback((l: Language) => {
     setLangState(l)
     localStorage.setItem("pythmaster-lang", l)
-    document.documentElement.lang = l === "hu" ? "hu" : "en"
-  }, [])
+    syncLanguage(l)
+  }, [syncLanguage])
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] as unknown as typeof translations.en }}>

@@ -9,11 +9,11 @@ export default function ProjectPage() {
           <FolderGit2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
           <CardTitle className="text-2xl">Crypto Exchange Analyzer</CardTitle>
           <CardDescription>
-            Your portfolio project is growing with every mission.
+            A portfólió projekted minden küldetéssel bővül.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center text-muted-foreground">
-          <p>Project page coming soon. Complete missions to build features here.</p>
+          <p>A projekt oldal hamarosan érkezik. Teljesíts küldetéseket, és itt épülnek be az új funkciók.</p>
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Flame, Zap, TrendingUp, Clock, Brain } from "lucide-react"
+import type { Language } from "@/lib/i18n/translations"
 
 interface LearningStatsCardProps {
   currentStreak: number
@@ -7,6 +8,7 @@ interface LearningStatsCardProps {
   currentLevel: number
   totalCodingMinutes: number
   quizAverage: number
+  lang: Language
 }
 
 export function LearningStatsCard({
@@ -15,6 +17,7 @@ export function LearningStatsCard({
   currentLevel,
   totalCodingMinutes,
   quizAverage,
+  lang,
 }: LearningStatsCardProps) {
   const codingHours = Math.floor(totalCodingMinutes / 60)
 
@@ -22,7 +25,7 @@ export function LearningStatsCard({
     {
       icon: Flame,
       value: `${currentStreak} days`,
-      label: "Current Streak",
+      label: lang === "hu" ? "Napi sorozat" : "Current Streak",
       color: "text-orange-500",
     },
     {
@@ -34,19 +37,19 @@ export function LearningStatsCard({
     {
       icon: TrendingUp,
       value: `Level ${currentLevel}`,
-      label: "Current Level",
+      label: lang === "hu" ? "Jelenlegi szint" : "Current Level",
       color: "text-blue-500",
     },
     {
       icon: Clock,
       value: `${codingHours}h`,
-      label: "Coding Time",
+      label: lang === "hu" ? "Kódolási idő" : "Coding Time",
       color: "text-green-500",
     },
     {
       icon: Brain,
       value: `${quizAverage}%`,
-      label: "Quiz Avg",
+      label: lang === "hu" ? "Kvíz átlag" : "Quiz Avg",
       color: "text-purple-500",
     },
   ]
@@ -55,7 +58,7 @@ export function LearningStatsCard({
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          Learning Statistics
+          {lang === "hu" ? "Tanulási statisztika" : "Learning Statistics"}
         </CardTitle>
       </CardHeader>
       <CardContent>

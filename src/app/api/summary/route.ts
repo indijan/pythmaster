@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { generateStructuredResponse } from "@/lib/openai/client"
 import { buildSummarySystemPrompt, buildSummaryUserPrompt, SUMMARY_PROMPT_VERSION } from "@/lib/prompts"
 import { getMissionById } from "@/lib/curriculum"
+import { createClient } from "@/lib/supabase/server"
+import { upsertMissionProgress } from "@/lib/mission-progress"
 
 interface SummaryResponse {
   summary: string
@@ -17,6 +19,7 @@ export async function POST(request: NextRequest) {
       code: string
       quizScore: number
       reviewFeedback: string
+      language?: string
     }
 
     if (!missionId) {
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Mission not found" }, { status: 404 })
     }
 
-    const systemPrompt = buildSummarySystemPrompt()
+    const systemPrompt = buildSummarySystemPrompt(body.language === "hu" ? "Hungarian" : "English")
     const userPrompt = buildSummaryUserPrompt(
       mission,
       code || "# No code submitted",
@@ -40,6 +43,21 @@ export async function POST(request: NextRequest) {
       temperature: 0.4,
       maxTokens: 2048,
     })
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const quizValue = quizScore || 0
+      const quizPassed = quizValue >= mission.requiredQuizScore
+
+      await upsertMissionProgress(supabase, user.id, missionId, {
+        status: "PROJECT",
+        quizScore: quizValue,
+        quizPassed,
+        projectUpdated: true,
+        summaryGenerated: true,
+      })
+    }
 
     return NextResponse.json({
       ...summary,

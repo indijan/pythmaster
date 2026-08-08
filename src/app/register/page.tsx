@@ -49,9 +49,9 @@ export default function RegisterPage() {
           <div className="flex justify-center mb-2">
             <Sparkles className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Start your journey</CardTitle>
+          <CardTitle className="text-2xl">Kezdd el az utazást</CardTitle>
           <CardDescription>
-            Learn Python &amp; Data Engineering through building
+            Tanulj Python és Data Engineering témákat építés közben
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleRegister}>
@@ -62,7 +62,7 @@ export default function RegisterPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display name</Label>
+              <Label htmlFor="displayName">Megjelenített név</Label>
               <Input
                 id="displayName"
                 type="text"
@@ -85,7 +85,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Jelszó</Label>
               <Input
                 id="password"
                 type="password"
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
               />
               <p className="text-xs text-muted-foreground">
-                At least 8 characters
+                Legalább 8 karakter
               </p>
             </div>
           </CardContent>
@@ -106,16 +106,16 @@ export default function RegisterPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating account...
+                  Fiók létrehozása...
                 </>
               ) : (
-                "Create account"
+                "Fiók létrehozása"
               )}
             </Button>
             <p className="text-sm text-muted-foreground text-center">
-              Already have an account?{" "}
+              Van már fiókod?{" "}
               <Link href="/login" className="text-primary hover:underline font-medium">
-                Sign in
+                Belépés
               </Link>
             </p>
           </CardFooter>
