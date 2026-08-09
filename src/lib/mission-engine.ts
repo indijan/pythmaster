@@ -12,6 +12,10 @@ export function getMissionStatus(
   completedMissionIds: number[],
   progress?: MissionProgress | null
 ): MissionStatus {
+  // List pages often load only the compact completed-ID set instead of every
+  // MissionProgress row. That set is authoritative for completed missions.
+  if (completedMissionIds.includes(missionId)) return "COMPLETED"
+
   // If in progress or further, return the stored status
   if (progress) {
     if (progress.status === "COMPLETED") return "COMPLETED"

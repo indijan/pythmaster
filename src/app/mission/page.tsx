@@ -106,7 +106,14 @@ export default async function MissionListPage() {
 
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium truncate">{localizedMission.title}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium truncate">{localizedMission.title}</h3>
+                              {isCompleted ? (
+                                <Badge className="shrink-0 bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-950 dark:text-green-300">
+                                  {lang === "hu" ? "Teljesítve" : "Completed"}
+                                </Badge>
+                              ) : null}
+                            </div>
                             <p className="text-sm text-muted-foreground truncate">{localizedMission.goal}</p>
                           </div>
 
