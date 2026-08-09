@@ -1,6 +1,8 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { MISSIONS, PHASES } from "@/lib/curriculum"
 import { getMissionStatus, calculateProgress, calculateTotalXp, calculateLevel } from "@/lib/mission-engine"
+import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -18,8 +20,18 @@ const difficultyLabels: Record<number, string> = {
 
 export default async function MissionListPage() {
   const lang = await getServerLanguage()
-  // Mock: completed mission IDs (first 6 for demo)
-  const completedMissionIds = [1, 2, 3, 4, 5, 6]
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const { data: progressRows } = await supabase
+    .from("mission_progress")
+    .select("mission_id, status")
+    .eq("user_id", user.id)
+
+  const completedMissionIds = ((progressRows || []) as { mission_id: number; status: string }[])
+    .filter((row) => row.status === "COMPLETED")
+    .map((row) => row.mission_id)
   const progress = calculateProgress(completedMissionIds)
   const totalXp = calculateTotalXp(completedMissionIds)
   const level = calculateLevel(totalXp)
