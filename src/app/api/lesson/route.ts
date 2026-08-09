@@ -19,9 +19,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "missionId is required" }, { status: 400 })
   }
 
+  const requestedLanguage = request.nextUrl.searchParams.get("language") === "hu" ? "hu" : "en"
+  const requestedStudentLevelRaw = Number(request.nextUrl.searchParams.get("studentLevel"))
+  const requestedStudentLevel = Number.isFinite(requestedStudentLevelRaw) && requestedStudentLevelRaw > 0
+    ? Math.min(7, Math.max(1, Math.round(requestedStudentLevelRaw)))
+    : null
+  const expectedStudentLevel = requestedStudentLevel ?? getMissionRecommendedLevel(parseInt(missionId, 10))
+
   const { data: lesson } = await supabase
     .from("generated_lessons")
-    .select("content, created_at")
+    .select("content, created_at, prompt_version")
     .eq("user_id", user.id)
     .eq("mission_id", parseInt(missionId))
     .single()
@@ -32,8 +39,17 @@ export async function GET(request: NextRequest) {
 
   const cachedContent = (lesson as Record<string, string>).content
   try {
-    const parsed = JSON.parse(cachedContent) as Partial<LessonResponse>
-    if (parsed && typeof parsed === "object" && parsed.theory) {
+    const parsed = JSON.parse(cachedContent) as Partial<LessonResponse> & {
+      meta?: {
+        language?: string
+        studentLevel?: number
+        promptVersion?: string
+      }
+    }
+    const promptVersionMatches = (lesson as Record<string, string>).prompt_version === LESSON_PROMPT_VERSION
+    const languageMatches = parsed?.meta?.language === requestedLanguage
+    const levelMatches = parsed?.meta?.studentLevel === expectedStudentLevel
+    if (promptVersionMatches && languageMatches && levelMatches && parsed && typeof parsed === "object" && parsed.theory) {
       return NextResponse.json({
         ...parsed,
         cached: true,
@@ -41,14 +57,10 @@ export async function GET(request: NextRequest) {
       })
     }
   } catch {
-    // fall back to legacy theory-only content below
+    // fall back to regeneration for legacy content
   }
 
-  return NextResponse.json({
-    theory: cachedContent,
-    cached: true,
-    createdAt: (lesson as Record<string, string>).created_at,
-  })
+  return NextResponse.json(null, { status: 404 })
 }
 
 interface LessonResponse {
@@ -71,20 +83,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { missionId, language } = body as { missionId: number; language?: string }
+    const { missionId, language, studentLevel } = body as { missionId: number; language?: string; studentLevel?: number }
     if (!missionId) {
       return NextResponse.json({ error: "missionId is required" }, { status: 400 })
     }
 
-    const lang = language === "hu" ? "Hungarian" : "English"
+    const normalizedLanguage = language === "hu" ? "hu" : "en"
+    const lang = normalizedLanguage === "hu" ? "Hungarian" : "English"
 
     const mission = getMissionById(missionId)
     if (!mission) {
       return NextResponse.json({ error: "Mission not found" }, { status: 404 })
     }
-    const localizedMission = getLocalizedMission(mission, language === "hu" ? "hu" : "en")
+    const localizedMission = getLocalizedMission(mission, normalizedLanguage)
     const levelBand = getMissionLevelBand(missionId)
-    const recommendedLevel = getMissionRecommendedLevel(missionId)
+    const requestedStudentLevel = typeof studentLevel === "number" && Number.isFinite(studentLevel)
+      ? Math.min(7, Math.max(1, Math.round(studentLevel)))
+      : getMissionRecommendedLevel(missionId)
 
     // Get real student data
     const { data: profile } = await supabase
@@ -125,7 +140,7 @@ export async function POST(request: NextRequest) {
       (url) => `Source: ${url}\n(Content fetched from official documentation)`
     )
 
-    const systemPrompt = buildLessonSystemPrompt(lang, recommendedLevel)
+    const systemPrompt = buildLessonSystemPrompt(lang, requestedStudentLevel)
     const userPrompt = buildLessonUserPrompt(localizedMission, student, projectContext, knowledgeSnippets, levelBand)
 
     const lesson = await generateStructuredResponse<LessonResponse>(systemPrompt, userPrompt, {
@@ -133,12 +148,23 @@ export async function POST(request: NextRequest) {
       maxTokens: 4096,
     })
 
+    const lessonRecord = {
+      ...lesson,
+      meta: {
+        missionId: mission.id,
+        language: normalizedLanguage,
+        studentLevel: requestedStudentLevel,
+        promptVersion: LESSON_PROMPT_VERSION,
+        generatedAt: new Date().toISOString(),
+      },
+    }
+
     // Save lesson to DB
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from("generated_lessons").upsert({
       user_id: user.id,
       mission_id: missionId,
-      content: JSON.stringify(lesson),
+      content: JSON.stringify(lessonRecord),
       python_version: "3.12",
       library_versions: {},
       documentation_version: "2025.1",
@@ -152,8 +178,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      ...lesson,
+      ...lessonRecord,
       meta: {
+        ...lessonRecord.meta,
         missionId: mission.id,
         promptVersion: LESSON_PROMPT_VERSION,
         pythonVersion: "3.12",

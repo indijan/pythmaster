@@ -9,7 +9,7 @@ import type { MissionLevelBand } from "@/lib/curriculum"
 // ============================================================
 // LESSON PROMPT
 // ============================================================
-export const LESSON_PROMPT_VERSION = "1.0.0"
+export const LESSON_PROMPT_VERSION = "1.1.0"
 
 export function buildLessonSystemPrompt(language: string = "English", studentLevel: number = 1): string {
   return `You are an experienced senior Python developer acting as a personal mentor. Your teaching style is:
@@ -30,6 +30,8 @@ RULES:
 7. Use the student's current project context to make examples relevant.
 8. End each section with a small check-in question.
 9. Student level: ${studentLevel}/7. Level 1-2 = explain everything in detail, assume zero prior knowledge. Level 3-4 = moderate detail. Level 5-7 = concise.
+10. Prefer human-readable explanations. Do not wrap simple symbols like +, -, *, /, =, :, quotes, or parentheses in backticks unless you are showing actual code. Explain symbols in words when that is clearer.
+11. If you mention a symbol in prose, spell it out naturally. For example, say "plus sign" instead of only \`+\`, and "double quotes" instead of only \`"\`.
 
 OUTPUT FORMAT:
 Return a JSON object with this exact structure:
@@ -171,7 +173,7 @@ Provide hint level ${nextLevel} (1-5 scale). Do NOT give the full solution unles
 // ============================================================
 // REVIEW PROMPT
 // ============================================================
-export const REVIEW_PROMPT_VERSION = "1.0.0"
+export const REVIEW_PROMPT_VERSION = "1.1.0"
 
 export function buildReviewSystemPrompt(language = "English"): string {
   return `You are a Python code reviewer. Review student code for a coding challenge.
@@ -184,6 +186,8 @@ EVALUATE:
 4. Complexity — any unnecessary complexity?
 5. Performance — obvious inefficiencies?
 6. Maintainability — would this pass a team code review?
+7. Prefer human-readable explanations over symbol-heavy shorthand. Use words like "plus sign" or "idézőjel" instead of raw punctuation when the symbol itself is not the topic.
+8. If you mention punctuation in prose, avoid unnecessary backticks and keep the wording readable.
 
 Be encouraging. Start with what they did well. Then suggest improvements.
 
@@ -220,11 +224,13 @@ Review this code and provide constructive feedback. Score 0-100.`
 // ============================================================
 // SUMMARY PROMPT
 // ============================================================
-export const SUMMARY_PROMPT_VERSION = "1.0.0"
+export const SUMMARY_PROMPT_VERSION = "1.1.0"
 
 export function buildSummarySystemPrompt(language = "English"): string {
   return `You create concise, visually organized mission summaries in Markdown.
 All content must be written in ${language}.
+Prefer human-readable wording. Avoid wrapping simple punctuation or operators in backticks unless they are part of actual code. For example, explain addition with words instead of writing only \`+\`.
+If you need to mention punctuation outside code, spell it out naturally so the learner does not have to decode the symbol first.
 
 OUTPUT FORMAT (JSON):
 {

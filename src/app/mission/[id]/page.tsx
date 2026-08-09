@@ -360,14 +360,26 @@ export default async function MissionPage({ params }: MissionPageProps) {
       </Card>
 
       {/* Action Button + Lesson View */}
-      {!isLocked && status !== "COMPLETED" && (
+      {!isLocked && (
         <MissionLessonWrapper
           missionId={mission.id}
           missionTitle={localizedMission.title}
           learningObjectives={localizedMission.learningObjectives}
           projectFeature={localizedMission.projectFeature}
           requiredQuizScore={mission.requiredQuizScore}
-          startLabel={status === "AVAILABLE" ? (lang === "hu" ? "Küldetés indítása" : "Start Mission") : (lang === "hu" ? "Küldetés folytatása" : "Continue Mission")}
+          startLabel={
+            status === "AVAILABLE"
+              ? lang === "hu"
+                ? "Küldetés indítása"
+                : "Start Mission"
+              : status === "COMPLETED"
+                ? lang === "hu"
+                  ? "Lecke újranyitása"
+                  : "Review Lesson"
+                : lang === "hu"
+                  ? "Küldetés folytatása"
+                  : "Continue Mission"
+          }
         />
       )}
 

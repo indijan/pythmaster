@@ -1,9 +1,12 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Playground } from "@/components/playground/playground"
-import { getMissionById } from "@/lib/curriculum"
+import { getMissionById, getMissionRecommendedLevel } from "@/lib/curriculum"
 import { useT } from "@/lib/i18n/context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -58,6 +61,13 @@ interface LessonData {
   keyTakeaways?: string[]
   commonMistakes?: CommonMistake[]
   sources?: string[]
+  meta?: {
+    missionId?: number
+    language?: "en" | "hu"
+    studentLevel?: number
+    promptVersion?: string
+    generatedAt?: string
+  }
 }
 
 interface ReviewData {
@@ -95,6 +105,36 @@ interface LessonViewProps {
   requiredQuizScore: number
 }
 
+const lessonLevelOptions = [
+  { value: 1, label: "1 - Absolute beginner" },
+  { value: 2, label: "2 - Beginner" },
+  { value: 3, label: "3 - Early intermediate" },
+  { value: 4, label: "4 - Intermediate" },
+  { value: 5, label: "5 - Confident intermediate" },
+  { value: 6, label: "6 - Advanced" },
+  { value: 7, label: "7 - Expert" },
+]
+
+function MarkdownContent({ children }: { children: string }) {
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-pre:my-0 prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:font-normal prose-code:before:content-none prose-code:after:content-none">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          pre: ({ children }: { children?: ReactNode }) => (
+            <pre className="overflow-auto rounded-lg border bg-muted/60 p-4 text-sm leading-6">
+              {children}
+            </pre>
+          ),
+          code: ({ children }: { children?: ReactNode }) => <code className="whitespace-pre-wrap">{children}</code>,
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
 interface MissionProgressUpdate {
   status?: "IN_PROGRESS" | "CODE_REVIEW" | "QUIZ" | "PROJECT" | "COMPLETED"
   lessonViewed?: boolean
@@ -117,6 +157,7 @@ export function MissionLessonView({
   requiredQuizScore,
 }: LessonViewProps) {
   const [activeStep, setActiveStep] = useState(0)
+  const [selectedLessonLevel, setSelectedLessonLevel] = useState(() => getMissionRecommendedLevel(missionId))
   const [lesson, setLesson] = useState<LessonData | null>(null)
   const [loadingLesson, setLoadingLesson] = useState(false)
   const [fromCache, setFromCache] = useState(false)
@@ -145,6 +186,8 @@ export function MissionLessonView({
             quiz: "Kvíz",
             summary: "Összegzés",
             generateLesson: "Lecke generálása",
+            regenerateLesson: "Újragenerálás",
+            lessonLevel: "Lecke szint",
             continueReading: "Olvasás folytatása",
             generatingLesson: "A személyre szabott lecke készül...",
             continuePractice: "Tovább a gyakorláshoz",
@@ -182,6 +225,8 @@ export function MissionLessonView({
             quiz: "Quiz",
             summary: "Summary",
             generateLesson: "Generate Lesson",
+            regenerateLesson: "Regenerate",
+            lessonLevel: "Lesson level",
             continueReading: "Continue Reading",
             generatingLesson: "Generating your personalized lesson...",
             continuePractice: "Continue to Practice",
@@ -250,12 +295,17 @@ export function MissionLessonView({
     setLoadingLesson(true)
     try {
       if (!forceGenerate) {
-        const cached = await fetch(`/api/lesson?missionId=${missionId}`)
+        const cached = await fetch(
+          `/api/lesson?missionId=${missionId}&language=${lang}&studentLevel=${selectedLessonLevel}`
+        )
         if (cached.ok) {
           const data = (await cached.json()) as LessonData & { cached?: boolean }
           if (data?.theory) {
             setLesson(data)
             setFromCache(Boolean(data.cached))
+            if (data.meta?.studentLevel) {
+              setSelectedLessonLevel(data.meta.studentLevel)
+            }
             if (data.guidedChallenge?.starterCode) {
               setChallengeCode(data.guidedChallenge.starterCode)
             }
@@ -269,12 +319,15 @@ export function MissionLessonView({
       const res = await fetch("/api/lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ missionId, language: lang }),
+        body: JSON.stringify({ missionId, language: lang, studentLevel: selectedLessonLevel }),
       })
       const data = (await res.json()) as LessonData
       if (data?.theory) {
         setLesson(data)
         setFromCache(false)
+        if (data.meta?.studentLevel) {
+          setSelectedLessonLevel(data.meta.studentLevel)
+        }
         if (data.guidedChallenge?.starterCode) {
           setChallengeCode(data.guidedChallenge.starterCode)
         }
@@ -452,15 +505,35 @@ export function MissionLessonView({
       {activeStep === 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              {copy.lesson}
-            </CardTitle>
-            <CardDescription>
-              {isHungarian
-                ? "A lecke a szintedhez, a projektkörnyezethez és a hivatalos Python dokumentációhoz igazodik."
-                : "The lesson adapts to your level, project context, and the official Python docs."}
-            </CardDescription>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  {copy.lesson}
+                </CardTitle>
+                <CardDescription>
+                  {isHungarian
+                    ? "A lecke a szintedhez, a projektkörnyezethez és a hivatalos Python dokumentációhoz igazodik."
+                    : "The lesson adapts to your level, project context, and the official Python docs."}
+                </CardDescription>
+              </div>
+              <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-3">
+                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {copy.lessonLevel}
+                </label>
+                <select
+                  className="h-9 rounded-md border bg-background px-3 text-sm"
+                  value={selectedLessonLevel}
+                  onChange={(event) => setSelectedLessonLevel(Number(event.target.value))}
+                >
+                  {lessonLevelOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {!lesson && !loadingLesson && (
@@ -484,8 +557,16 @@ export function MissionLessonView({
             )}
             {lesson && (
               <div className="space-y-5">
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <div className="whitespace-pre-wrap">{lesson.theory}</div>
+                <div className="flex flex-wrap items-center gap-2 justify-between rounded-lg border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  <span>
+                    {isHungarian ? "Aktív lecke szint" : "Active lesson level"}: {selectedLessonLevel}/7
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => void loadLesson(true)} disabled={loadingLesson}>
+                    {copy.regenerateLesson}
+                  </Button>
+                </div>
+                <div>
+                  <MarkdownContent>{lesson.theory}</MarkdownContent>
                 </div>
                 {lesson.examples?.length ? (
                   <div className="space-y-3">
@@ -888,12 +969,12 @@ export function MissionLessonView({
             {summaryData && (
               <div className="space-y-4">
                 <div className="rounded-md border bg-muted/20 p-4">
-                  <pre className="whitespace-pre-wrap text-sm leading-6">{summaryData.summary}</pre>
+                  <MarkdownContent>{summaryData.summary}</MarkdownContent>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-md border bg-muted/20 p-4">
                     <h4 className="text-sm font-semibold mb-2">{isHungarian ? "Cheat sheet" : "Cheat Sheet"}</h4>
-                    <pre className="whitespace-pre-wrap text-xs leading-5">{summaryData.cheatSheet}</pre>
+                    <MarkdownContent>{summaryData.cheatSheet}</MarkdownContent>
                   </div>
                   <div className="rounded-md border bg-muted/20 p-4">
                     <h4 className="text-sm font-semibold mb-2">
